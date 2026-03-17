@@ -748,3 +748,55 @@ body {
     padding: var(--space-4);
   }
   }
+
+/* Letter Rack */
+.letter-rack {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  overflow-x: auto;
+  margin-bottom: var(--space-4);
+  min-height: 64px;
+  align-items: center;
+  justify-content: center;
+}
+
+.letter-rack-btn {
+  min-width: 44px;
+  min-height: 44px;
+  background: var(--surface-2);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-tile);
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.letter-rack-btn:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.letter-rack-btn.selected {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--success);
+  box-shadow: 0 0 12px var(--success);
+  transform: translateY(-4px);
+}
+
+.letter-rack-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  }
