@@ -53,17 +53,21 @@
       <div class="board" id="board" role="grid" aria-label="Game board"></div>
     </div>
 
+    <!-- Add this after the board-wrap div -->
+    <div class="letter-rack" id="letter-rack"></div>
+
+    <!-- And update the action bar buttons -->
     <div class="action-bar">
       <button class="btn-ghost" id="btn-regrow" aria-label="Regrow board">
         <span class="btn-icon">↺</span>
         <span>REGROW</span>
       </button>
+      <button class="btn-primary" id="btn-plant">
+        <span>PLANT WORD</span>
+      </button>
       <button class="btn-ghost" id="btn-sense" aria-label="Sense hint">
         <span class="btn-icon">💡</span>
         <span>SENSE</span>
-      </button>
-      <button class="btn-primary" id="btn-plant">
-        <span>PLANT WORD</span>
       </button>
     </div>
   </main>
