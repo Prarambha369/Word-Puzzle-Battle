@@ -1,33 +1,31 @@
 /**
- * Word Puzzle Battle — Service Worker
+ * Word Puzzle Battle
  * Copyright (c) 2026 Prarambha Bashyal. All rights reserved.
- * https://github.com/Prarambha369/Word-Puzzle-Battle
+ * Source: https://github.com/Prarambha369/word-puzzle-battle
  * License: Word Puzzle Battle Source-Available License v1.0
+ *
+ * Free for personal/non-commercial use.
+ * Commercial use requires a 27% gross revenue royalty agreement.
+ * Attribution to the original author is mandatory in all derivatives.
  */
-'use strict';
 
-const CACHE = 'wpb-v2';
-
+const CACHE  = 'wpb-v2';
 const ASSETS = [
-  './',
-  './index.html',
-  './style.css',
-  './game.js',
-  './trie.js',
-  './ai-bot.js',
-  './dictionary.json',
-  './manifest.json',
-  './favicon.ico',
-  './assets/icons/icon-192.png',
-  './assets/icons/icon-512.png',
-  './assets/icons/icon-maskable-512.png',
-  './assets/icons/apple-touch-icon.png',
-  './assets/og-image.png',
+  '/',
+  '/index.html',
+  '/style.css',
+  '/trie.js',
+  '/game.js',
+  '/ai-bot.js',
+  '/dictionary.json',
+  '/manifest.json',
+  '/assets/icons/icon-192.png',
+  '/assets/icons/icon-512.png'
 ];
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(cache => cache.addAll(ASSETS))
+    caches.open(CACHE).then(c => c.addAll(ASSETS))
   );
   self.skipWaiting();
 });
