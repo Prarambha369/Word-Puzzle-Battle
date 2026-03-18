@@ -2,7 +2,6 @@
 <!--
  * Word Puzzle Battle
  * Copyright (c) 2026 Prarambha Bashyal. All rights reserved.
- *
  * Source: https://github.com/Prarambha369/word-puzzle-battle
  * License: Word Puzzle Battle Source-Available License v1.0
  *
@@ -15,42 +14,43 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="description" content="A competitive turn-based word-building game. Plant letters, grow words, harvest points." />
-  <meta property="og:title" content="Word Puzzle Battle" />
-  <meta property="og:description" content="Plant letters. Grow words. First to 20 wins." />
-  <meta property="og:image" content="assets/og-image.png" />
-  <meta property="og:url" content="https://word-puzzle-battle.vercel.app" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:image" content="assets/og-image.png" />
   <meta name="theme-color" content="#004643" />
-  <title>Word Puzzle Battle</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="favicon.ico" sizes="any" />
-  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="WPB" />
-  <!-- Fonts: DM Sans (UI) + Space Mono (tiles, headings, lore) -->
+  <title>Word Puzzle Battle</title>
+  <link rel="manifest" href="manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&family=Space+Mono:wght@400;700&display=swap"
-  />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&family=Space+Mono:wght@400;700&display=swap" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- ═══════════════════════════════════════════
-       HOME SCREEN
-  ════════════════════════════════════════════ -->
+  <!-- HOME SCREEN -->
   <div id="home-screen" class="home-screen" role="main">
-
     <div class="home-header">
       <div class="home-logo-lockup">
         <div class="home-logo" aria-hidden="true">W</div>
         <span class="home-system-label">ROOT SYSTEM: ACTIVE</span>
       </div>
-      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">☀</button>
+      <!-- Sun / Moon theme toggle -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+        <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
     </div>
 
     <div class="home-hero">
@@ -71,71 +71,92 @@
       <div class="difficulty-section">
         <p class="section-label">SELECT DIFFICULTY</p>
         <div class="difficulty-group" role="group" aria-label="Difficulty">
-          <button class="diff-btn" data-diff="easy"   aria-pressed="false">EASY</button>
+          <button class="diff-btn" data-diff="easy" aria-pressed="false">EASY</button>
           <button class="diff-btn diff-btn--active" data-diff="medium" aria-pressed="true">MED</button>
-          <button class="diff-btn" data-diff="hard"   aria-pressed="false">HARD</button>
+          <button class="diff-btn" data-diff="hard" aria-pressed="false">HARD</button>
         </div>
       </div>
 
       <div class="play-buttons">
-        <button class="btn-play-primary" id="btn-vs-ai">🤖 PLAY VS AI</button>
-        <button class="btn-play-ghost"   id="btn-vs-friend">👥 PLAY VS FRIEND</button>
+        <!-- VS AI button -->
+        <button class="btn-play-primary" id="btn-vs-ai">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            <line x1="12" y1="15" x2="12" y2="17"/>
+          </svg>
+          PLAY VS AI
+        </button>
+        <!-- VS Friend button -->
+        <button class="btn-play-ghost" id="btn-vs-friend">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          PLAY VS FRIEND
+        </button>
       </div>
 
       <div class="home-footer-row">
-        <button class="footer-btn" id="btn-settings"    aria-label="Settings">⚙</button>
+        <!-- Settings -->
+        <button class="footer-btn" id="btn-settings" aria-label="Settings">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
         <p class="home-footer">By Prarambha Bashyal · Vanilla JS · PWA</p>
-        <button class="footer-btn" id="btn-how-to-play" aria-label="How to play">?</button>
+        <!-- How to play -->
+        <button class="footer-btn" id="btn-how-to-play" aria-label="How to play">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </button>
       </div>
     </div>
-
   </div>
 
-  <!-- ═══════════════════════════════════════════
-       GAME SCREEN
-  ════════════════════════════════════════════ -->
+  <!-- GAME SCREEN -->
   <div id="game-screen" class="game-screen hidden">
-
     <header class="hud" role="banner">
       <div class="player-card" id="p1-card">
         <span class="player-label">YOU</span>
         <span class="score" id="p1-score">0</span>
-        <div class="progress-bar"
-             role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="20"
-             aria-label="Player 1 progress">
+        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="20" aria-label="Player 1 progress">
           <div class="progress-fill" id="p1-progress"></div>
         </div>
       </div>
-
       <div class="hud-center">
         <div class="turn-badge" id="turn-badge" aria-live="polite">YOUR TURN</div>
-        <button class="home-btn" id="btn-home" aria-label="Return to menu">⌂</button>
+        <!-- Home button -->
+        <button class="home-btn" id="btn-home" aria-label="Return to menu">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+        </button>
       </div>
-
       <div class="player-card right" id="p2-card">
-        <span class="player-label" id="p2-label">GUEST</span>
+        <span class="player-label" id="p2-label">AI</span>
         <span class="score" id="p2-score">0</span>
-        <div class="progress-bar"
-             role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="20"
-             aria-label="Player 2 progress">
+        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="20" aria-label="Player 2 progress">
           <div class="progress-fill" id="p2-progress"></div>
         </div>
       </div>
     </header>
-
     <main>
       <div class="board-wrap">
         <div class="board" id="board" role="grid" aria-label="Game board, 10 by 10"></div>
       </div>
     </main>
-
   </div>
 
-  <!-- ═══════════════════════════════════════════
-       LETTER PICKER — bottom sheet
-  ════════════════════════════════════════════ -->
-  <div class="modal-overlay hidden" id="letter-modal"
-       role="dialog" aria-modal="true" aria-label="Choose a letter to plant">
+  <!-- LETTER PICKER -->
+  <div class="modal-overlay hidden" id="letter-modal" role="dialog" aria-modal="true" aria-label="Choose a letter to plant">
     <div class="bottom-sheet">
       <div class="sheet-handle" aria-hidden="true"></div>
       <p class="sheet-title">PLANT A LETTER</p>
@@ -144,23 +165,24 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════
-       WIN MODAL
-  ════════════════════════════════════════════ -->
-  <div class="modal-overlay hidden" id="win-modal"
-       role="dialog" aria-modal="true" aria-label="Game over">
+  <!-- WIN MODAL -->
+  <div class="modal-overlay hidden" id="win-modal" role="dialog" aria-modal="true" aria-label="Game over">
     <div class="win-card">
       <p class="win-label">HARVEST RESULT</p>
-      <div class="win-title" id="win-title">PLAYER 1 WINS</div>
-      <div class="win-scores"    id="win-scores"></div>
+      <div class="win-title" id="win-title">YOU WIN</div>
+      <div class="win-scores" id="win-scores"></div>
       <div class="win-last-word" id="win-last-word"></div>
       <button class="btn-primary" id="play-again">GROW AGAIN</button>
-      <button class="btn-ghost"   id="win-home" style="margin-top:8px">RETURN TO ROOTS</button>
+      <button class="btn-ghost" id="win-home" style="margin-top:8px">RETURN TO ROOTS</button>
     </div>
   </div>
 
-  <!-- AI status pill -->
+  <!-- AI thinking pill -->
   <div class="ai-thinking hidden" id="ai-thinking" aria-live="polite">
+    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="ai-spin">
+      <polyline points="23 4 23 10 17 10"/>
+      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+    </svg>
     GROWING WORD TREE…
   </div>
 
@@ -168,440 +190,22 @@
   <script src="game.js"></script>
   <script src="ai-bot.js"></script>
   <script>
-    /* Theme init — runs before paint to prevent flash */
     (function () {
-      const stored = localStorage.getItem('wpb-theme');
-      const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.documentElement.setAttribute('data-theme', stored || (dark ? 'dark' : 'light'));
+      var stored = localStorage.getItem('wpb-theme');
+      var dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var theme = stored || (dark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+      var sun  = document.getElementById('icon-sun');
+      var moon = document.getElementById('icon-moon');
+      if (sun && moon) {
+        sun.style.display  = theme === 'dark'  ? 'block' : 'none';
+        moon.style.display = theme === 'light' ? 'block' : 'none';
+      }
     })();
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./service-worker.js')
-        .catch(e => console.warn('[WPB] SW failed:', e));
+        .catch(function(e) { console.warn('[WPB] SW failed:', e); });
     }
   </script>
 </body>
 </html>
-      <p class="home-tagline">Place letters · Form words · First to 20 wins</p>
-    </div>
-
-    <div id="loading-state" class="loading-state" aria-live="polite">
-      <div class="loading-spinner" aria-hidden="true"></div>
-      <span>Loading dictionary…</span>
-    </div>
-
-    <div id="menu-body" class="menu-body hidden">
-      <div class="difficulty-section">
-        <p class="section-label">Select Difficulty</p>
-        <div class="difficulty-group" role="group" aria-label="Difficulty">
-          <button class="diff-btn" data-diff="easy" aria-pressed="false">Easy</button>
-          <button class="diff-btn diff-btn--active" data-diff="medium" aria-pressed="true">Med</button>
-          <button class="diff-btn" data-diff="hard" aria-pressed="false">Hard</button>
-        </div>
-      </div>
-
-      <div class="play-buttons">
-        <button class="btn-play-primary" id="btn-vs-ai">
-          <span aria-hidden="true">🤖</span> Play vs AI
-        </button>
-        <button class="btn-play-ghost" id="btn-vs-friend">
-          <span aria-hidden="true">👥</span> Play vs Friend
-        </button>
-      </div>
-
-      <p class="home-footer">By Prarambha Bashyal · Vanilla JS · PWA</p>
-    </div>
-
-  </div>
-
-  <!-- ═══════════════════════════════════════════
-       GAME SCREEN — hidden until play pressed
-  ════════════════════════════════════════════ -->
-  <div id="game-screen" class="game-screen hidden">
-
-    <header class="hud" role="banner">
-      <div class="player-card" id="p1-card">
-        <span class="player-label">You</span>
-        <span class="score" id="p1-score">0</span>
-        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="20">
-          <div class="progress-fill" id="p1-progress"></div>
-        </div>
-      </div>
-
-      <div class="hud-center">
-        <div class="turn-badge" id="turn-badge" aria-live="polite">P1 Turn</div>
-        <button class="home-btn" id="btn-home" aria-label="Return to home">⌂</button>
-      </div>
-
-      <div class="player-card right" id="p2-card">
-        <span class="player-label" id="p2-label">Player 2</span>
-        <span class="score" id="p2-score">0</span>
-        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="20">
-          <div class="progress-fill" id="p2-progress"></div>
-        </div>
-      </div>
-    </header>
-
-    <main>
-      <div class="board-wrap">
-        <div class="board" id="board" role="grid" aria-label="Game board, 10 by 10"></div>
-      </div>
-    </main>
-
-  </div>
-
-  <!-- ═══════════════════════════════════════════
-       LETTER PICKER — bottom sheet modal
-  ════════════════════════════════════════════ -->
-  <div class="modal-overlay hidden" id="letter-modal" role="dialog" aria-modal="true" aria-label="Choose a letter">
-    <div class="bottom-sheet">
-      <div class="sheet-handle" aria-hidden="true"></div>
-      <p class="sheet-title">Choose a letter</p>
-      <div class="letter-grid" id="letter-grid" role="group" aria-label="Alphabet"></div>
-      <button class="btn-ghost" id="modal-cancel">Cancel</button>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════
-       WIN MODAL
-  ════════════════════════════════════════════ -->
-  <div class="modal-overlay hidden" id="win-modal" role="dialog" aria-modal="true" aria-label="Game over">
-    <div class="win-card">
-      <div class="win-title" id="win-title">Player 1 Wins!</div>
-      <div class="win-scores" id="win-scores"></div>
-      <div class="win-last-word" id="win-last-word"></div>
-      <button class="btn-primary" id="play-again">Play Again</button>
-      <button class="btn-ghost" id="win-home" style="margin-top:8px;">Back to Menu</button>
-    </div>
-  </div>
-
-  <!-- AI thinking indicator -->
-  <div class="ai-thinking hidden" id="ai-thinking" aria-live="polite" aria-label="AI is thinking">
-    <span aria-hidden="true">🤖</span> AI thinking…
-  </div>
-
-  <script src="trie.js"></script>
-  <script src="game.js"></script>
-  <script src="ai-bot.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./service-worker.js')
-        .catch(err => console.warn('SW registration failed:', err));
-    }
-  </script>
-</body>
-</html>
-    <!-- HUD -->
-    <div class="hud">
-      <div class="player-card" id="p1-card">
-        <span class="player-label">YOU</span>
-        <span class="score" id="p1-score">7</span>
-        <div class="progress-bar">
-          <div class="progress-fill" id="p1-progress"></div>
-        </div>
-      </div>
-      <div class="turn-badge" id="turn-badge">YOUR TURN</div>
-      <div class="player-card right" id="p2-card">
-        <span class="player-label" id="p2-label">OPPONENT</span>
-        <span class="score" id="p2-score">3</span>
-        <div class="progress-bar">          <div class="progress-fill" id="p2-progress"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Board -->
-    <div class="board-wrap">
-      <div class="board" id="board" role="grid" aria-label="Game board">
-        <!-- Will be filled by game.js -->
-      </div>
-    </div>
-
-    <!-- Letter Rack (mobile-first, scrollable) -->
-    <div class="letter-rack" id="letter-rack">
-      <button class="letter-chip">W</button>
-      <button class="letter-chip">O</button>
-      <button class="letter-chip">O</button>
-      <button class="letter-chip">D</button>
-      <button class="letter-chip">L</button>
-      <button class="letter-chip">A</button>
-      <button class="letter-chip">N</button>
-    </div>
-
-    <!-- Action Bar -->
-    <div class="action">
-      <button class="btn-ghost" id="btn-regrow" aria-label="Regrow board">
-        <span class="btn-icon">↺</span>
-        <span>REGROW</span>
-      </button>
-      <button class="btn-ghost" id="btn-sense" aria-label="Sense hint">
-        <span class="btn-icon">💡</span>
-        <span>SENSE</span>
-      </button>
-      <button class="btn-primary" id="btn-plant">
-        <span>PLANT WORD</span>
-      </button>
-    </div>
-  </main>
-
-  <!-- Letter Input Bottom Sheet -->
-  <div class="modal-overlay hidden" id="letter-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <div class="bottom-sheet">
-      <div class="sheet-handle"></div>
-      <div class="sheet-header">
-        <h2 class="sheet-title" id="modal-title">Place your letter</h2>
-        <button class="sheet-close" id="modal-close" aria-label="Close modal">×</button>
-      </div>
-      <p class="sheet-subtitle" id="sheet-coords">ROW 3, COLUMN 5</p>
-      <div class="letter-grid" id="letter-grid" role="listbox" aria-label="Letter selection">
-        <!-- Filled by JS -->      </div>
-      <div class="hint-bar" id="hint-bar">
-        <span class="hint-icon">🌿</span>
-        <span class="hint-text">Placing this letter will complete "ROOTS"</span>
-      </div>
-      <div class="sheet-actions">
-        <button class="btn-ghost" id="modal-cancel">Cancel</button>
-        <button class="btn-primary" id="modal-place">PLANT</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Victory Modal -->
-  <div class="modal-overlay hidden" id="win-modal" role="dialog" aria-modal="true" aria-labelledby="win-title">
-    <div class="win-card">
-      <div class="win-badge" id="win-badge">HARVEST RESULT</div>
-      <h2 class="win-title" id="win-title">Prarambha Wins!</h2>
-      <div class="win-scores" id="win-scores">20 – 14</div>
-      <div class="win-last-word" id="win-last-word">
-        Last word: <span class="last-word">BATTLE</span><br>
-        <span class="bonus">+3 bonus points applied</span>
-      </div>
-      <button class="btn-primary" id="play-again">PLAY AGAIN</button>
-      <button class="btn-ghost" id="return-roots">RETURN TO ROOTS</button>
-    </div>
-  </div>
-
-  <!-- AI Thinking Indicator -->
-  <div class="ai-thinking hidden" id="ai-thinking">
-    <span class="thinking-icon">🌱</span>
-    <span>GROWING WORD TREE...</span>
-  </div>
-
-  <!-- Multiplayer Lobby Modal (for future use — optional but included for completeness) -->
-  <div class="modal-overlay hidden" id="lobby-modal" role="dialog" aria-modal="true" aria-labelledby="lobby-title">
-    <div class="lobby-card">
-      <div class="lobby-header">
-        <h2 class="lobby-title" id="lobby-title">MULTIPLAYER LOBBY</h2>
-        <button class="lobby-close" id="lobby-close" aria-label="Close lobby">×</button>
-      </div>
-      <p class="lobby-subtitle">Synchronize with other spirits in the grove.</p>
-      
-      <button class="btn-primary" id="btn-create-grove">
-        <span class="btn-icon">+</span>
-        <span>CREATE PRIVATE GROVE</span>
-      </button>
-
-      <div class="lobby-input-row">
-        <div class="input-icon">🔑</div>
-        <input type="text" id="glade-code-input" placeholder="ENTER GLADE CODE..." autocomplete="off" />        <button class="btn-ghost" id="btn-join-glade">JOIN</button>
-      </div>
-
-      <div class="public-glades">
-        <div class="glade-list-header">
-          <span class="glade-list-label">🌱 PUBLIC GLADES</span>
-          <span class="glade-count">12 ACTIVE NODES</span>
-        </div>
-        
-        <div class="glade-item">
-          <div class="glade-icon">🌳</div>
-          <div class="glade-info">
-            <div class="glade-name">Ancient Willow</div>
-            <div class="glade-host">HOST: ELDER_ROOT</div>
-          </div>
-          <div class="glade-status">
-            <span class="players">3/4</span>
-            <span class="state">STARTING...</span>
-          </div>
-        </div>
-        
-        <div class="glade-item">
-          <div class="glade-icon">🧠</div>
-          <div class="glade-info">
-            <div class="glade-name">Cerebral Moss</div>
-            <div class="glade-host">HOST: NEURO_LEAF</div>
-          </div>
-          <div class="glade-status">
-            <span class="players">1/4</span>
-            <span class="state">OPEN</span>
-          </div>
-        </div>
-        
-        <div class="glade-item">
-          <div class="glade-icon">💧</div>
-          <div class="glade-info">
-            <div class="glade-name">Dewpoint Hollow</div>
-            <div class="glade-host">HOST: RAIN_MAKER</div>
-          </div>
-          <div class="glade-status">
-            <span class="players">2/4</span>
-            <span class="state">OPEN</span>
-          </div>
-        </div>
-      </div>
-
-      <button class="btn-ghost" id="btn-load-more-glades">LOAD MORE GLADES...</button>
-    </div>
-  </div>
-  <!-- Bottom Navigation -->
-  <div class="bottom-nav">
-    <div class="nav-item active">
-      <span class="nav-icon">🌲</span>
-      <span>Forest</span>
-    </div>
-    <div class="nav-item">
-      <span class="nav-icon">🏆</span>
-      <span>Rankings</span>
-    </div>
-    <div class="nav-item">
-      <span class="nav-icon">👥</span>
-      <span>Clans</span>
-    </div>
-    <div class="nav-item">
-      <span class="nav-icon">👻</span>
-      <spanpirit</span>
-    </div>
-  </div>
-
-  <!-- Scripts -->
-  <script src="trie.js" defer></script>
-  <script src="ai-bot.js" defer></script>
-  <script src="game.js" defer></script>
-  <script defer>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
-          .then(reg => console.log('SW registered:', reg.scope))
-          .catch(err => console.error('SW registration failed:', err));
-      });
-    }
-  </script>
-</body>
-</html>        <span class="player-label">YOU</span>
-        <span class="score" id="p1-score">0</span>
-        <div class="progress-bar">
-          <div class="progress-fill" id="p1-progress"></div>
-        </div>
-      </div>
-      <div class="turn-badge" id="turn-badge">YOUR TURN</div>
-      <div class="player-card right" id="p2-card">
-        <span class="player-label" id="p2-label">OPPONENT</span>
-        <span class="score" id="p2-score">0</span>
-        <div class="progress-bar">
-          <div class="progress-fill" id="p2-progress"></div>
-        </div>
-      </div>    </div>
-
-    <div class="board-wrap">
-      <div class="board" id="board" role="grid" aria-label="Game board"></div>
-    </div>
-
-    <!-- Add this after the board-wrap div -->
-    <div class="letter-rack" id="letter-rack"></div>
-
-    <!-- And update the action bar buttons -->
-    <div class="action-bar">
-      <button class="btn-ghost" id="btn-regrow" aria-label="Regrow board">
-        <span class="btn-icon">↺</span>
-        <span>REGROW</span>
-      </button>
-      <button class="btn-primary" id="btn-plant">
-        <span>PLANT WORD</span>
-      </button>
-      <button class="btn-ghost" id="btn-sense" aria-label="Sense hint">
-        <span class="btn-icon">💡</span>
-        <span>SENSE</span>
-      </button>
-    </div>
-  </main>
-
-  <div class="modal-overlay hidden" id="letter-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <div class="bottom-sheet">
-      <div class="sheet-handle"></div>
-      <div class="sheet-header">
-        <h2 class="sheet-title" id="modal-title">Place your letter</h2>
-        <button class="sheet-close" id="modal-close" aria-label="Close modal">×</button>
-      </div>
-      <p class="sheet-subtitle" id="sheet-coords">ROW —, COLUMN —</p>
-      <div class="letter-grid" id="letter-grid" role="listbox" aria-label="Letter selection"></div>
-      <div class="hint-bar" id="hint-bar">
-        <span class="hint-icon">🌿</span>
-        <span class="hint-text">Select a letter to plant on the board</span>
-      </div>
-      <div class="sheet-actions">
-        <button class="btn-ghost" id="modal-cancel">Cancel</button>
-        <button class="btn-primary" id="modal-place">PLANT</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-overlay hidden" id="win-modal" role="dialog" aria-modal="true" aria-labelledby="win-title">
-    <div class="win-card">
-      <div class="win-badge" id="win-badge">VICTORY</div>
-      <h2 class="win-title" id="win-title">Player 1 Wins!</h2>
-      <div class="win-scores" id="win-scores"></div>
-      <div class="win-last-word" id="win-last-word"></div>
-      <button class="btn-primary" id="play-again">PLAY AGAIN</button>
-      <button class="btn-ghost" id="return-roots">RETURN TO ROOTS</button>
-    </div>  </div>
-
-  <div class="ai-thinking hidden" id="ai-thinking">
-    <span class="thinking-icon">🌱</span>
-    <span>GROWING WORD TREE...</span>
-  </div>
-
-  <div class="menu-overlay hidden" id="menu-overlay">
-    <div class="menu-card">
-      <div class="menu-logo">
-        <div class="logo-mark large">W</div>
-      </div>
-      <h1 class="menu-title">WORD PUZZLE BATTLE</h1>
-      <p class="menu-subtitle">EXPANSION PROTOCOL INITIATED</p>
-      
-      <div class="difficulty-select">
-        <p class="difficulty-label">SELECT DIFFICULTY</p>
-        <div class="difficulty-segmented" role="radiogroup" aria-label="Difficulty selection">
-          <button class="diff-btn selected" data-diff="easy" role="radio" aria-checked="true">EASY</button>
-          <button class="diff-btn" data-diff="medium" role="radio" aria-checked="false">MED</button>
-          <button class="diff-btn" data-diff="hard" role="radio" aria-checked="false">HARD</button>
-        </div>
-      </div>
-
-      <button class="btn-primary large" id="menu-play-ai">
-        <span class="btn-icon">🤖</span>
-        PLAY VS AI
-      </button>
-      <button class="btn-ghost large" id="menu-play-friend">
-        <span class="btn-icon">👥</span>
-        PLAY VS FRIEND
-      </button>
-
-      <div class="menu-footer">
-        <button class="menu-link" id="menu-settings">⚙ SETTINGS</button>
-        <button class="menu-link" id="menu-help">? HOW TO PLAY</button>
-      </div>
-
-      <p class="menu-system">ROOT SYSTEM: ACTIVE | GROWTH v1.0.4</p>
-    </div>
-  </div>
-
-  <script src="trie.js" defer></script>
-  <script src="ai-bot.js" defer></script>
-  <script src="game.js" defer></script>
-  <script defer>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
-          .then(reg => console.log('SW registered:', reg.scope))          .catch(err => console.log('SW registration failed:', err));
-      });
-    }
-  </script>
-</body>
-    </html>
