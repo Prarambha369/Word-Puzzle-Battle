@@ -1,13 +1,13 @@
 {
   "name": "Word Puzzle Battle",
   "short_name": "WPB",
-  "description": "A competitive turn-based word-building game. Place letters, form words, first to 20 wins.",
+  "description": "Plant letters. Grow words. Harvest points. First to 20 wins.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0f0f11",
-  "theme_color": "#0f0f11",
+  "background_color": "#004643",
+  "theme_color": "#004643",
   "categories": ["games", "word"],
   "icons": [
     { "src": "assets/icons/icon-72.png",           "sizes": "72x72",   "type": "image/png" },
