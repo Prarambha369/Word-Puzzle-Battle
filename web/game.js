@@ -1,381 +1,341 @@
 /**
- * Word Puzzle Battle
+ * Word Puzzle Battle — Core Game Logic
  * Copyright (c) 2026 Prarambha Bashyal. All rights reserved.
  * https://github.com/Prarambha369/Word-Puzzle-Battle
  * License: Word Puzzle Battle Source-Available License v1.0
  */
-
 'use strict';
 
-/** @type {Array<Array<Object>>} */
-let board = [];
+/* ═══════════════════════════════════
+   STATE
+═══════════════════════════════════ */
+let board        = [];
+let currentTurn  = 'p1';
+let scores       = { p1: 0, p2: 0 };
+let trie         = null;
+let gameOver     = false;
+let pendingCell  = null;
+let scoredPaths  = new Set();
+let lastWord     = '';
 
-/** @type {string} - Current turn ('p1' or 'p2') */
-let currentTurn = 'p1';
+// Set by startGame() — never hardcoded
+let GAME_MODE    = 'vs-human';
+let AI_DIFFICULTY = 'medium';
 
-/** @type {Object<string, number>} - Player scores */
-let scores = { p1: 0, p2: 0 };
-
-/** @type {Object|null} - Loaded Trie dictionary */
-let trie = null;
-
-/** @type {boolean} - Whether game is over */
-let gameOver = false;
-
-/** @type {Object|null} - Cell being filled by modal */
-let pendingCell = null;
-
-/** @type {Set<string>} - Scored path keys (prevents double scoring) */
-let scoredPaths = new Set();
-
-/** @type {Array<string>} - Words formed in this match */
-let lastWords = [];
-
-/** @type {string} - Game mode ('vs-ai' or 'vs-human') */
-let gameMode = 'vs-human';
-
-/** @type {string} - AI difficulty ('easy', 'medium', 'hard') */
-let aiDifficulty = 'medium';
-
-/** Constants */
 const WIN_SCORE = 20;
-const BOARD_SIZE = 10;
+
+/* ═══════════════════════════════════
+   THEME
+═══════════════════════════════════ */
 
 /**
- * Initializes the 10x10 game board array and resets all state.
- * Called at start of each new game.
- * @returns {void}
+ * Reads saved theme or detects OS preference, applies to <html>.
  */
-function initBoard() {
-  // Reset board array  board = [];
-  for (let r = 0; r < BOARD_SIZE; r++) {
-    board[r] = [];
-    for (let c = 0; c < BOARD_SIZE; c++) {
-      board[r][c] = {
-        letter: null,
-        owner: null,
-        row: r,
-        col: c,
-        highlighted: false
-      };
-    }
-  }
-
-  // Reset scores and state
-  scores = { p1: 0, p2: 0 };
-  currentTurn = 'p1';
-  gameOver = false;
-  scoredPaths = new Set();
-  lastWords = [];
-
-  // Render and update UI
-  renderBoard();
-  updateHUD();
-  updateTurnBadge();
+function initTheme() {
+  const saved = localStorage.getItem('wpb-theme');
+  const preferred = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  applyTheme(saved || preferred);
 }
 
 /**
- * Renders all 100 tiles to the grid container.
- * Uses DocumentFragment for performance (no innerHTML in loop).
- * @returns {void}
+ * Applies theme and updates toggle button label.
+ * @param {string} theme — 'dark' | 'light'
+ */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('wpb-theme', theme);
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = theme === 'dark' ? '☀' : '☾';
+}
+
+/* ═══════════════════════════════════
+   SCREEN TRANSITIONS
+═══════════════════════════════════ */
+
+/**
+ * Shows the home screen, hides game screen.
+ * Resets game state so a fresh game starts cleanly.
+ */
+function showHome() {
+  document.getElementById('home-screen').classList.remove('hidden');
+  document.getElementById('game-screen').classList.add('hidden');
+  document.getElementById('win-modal').classList.add('hidden');
+}
+
+/**
+ * Shows the game screen, hides home screen.
+ */
+function showGame() {
+  document.getElementById('home-screen').classList.add('hidden');
+  document.getElementById('game-screen').classList.remove('hidden');
+}
+
+/**
+ * Called when a Play button is pressed.
+ * Sets game mode + difficulty, initialises the board.
+ * @param {string} mode        — 'vs-ai' | 'vs-human'
+ * @param {string} difficulty  — 'easy' | 'medium' | 'hard'
+ */
+function startGame(mode, difficulty) {
+  GAME_MODE     = mode;
+  AI_DIFFICULTY = difficulty;
+
+  // Update P2 label to reflect who they're playing
+  document.getElementById('p2-label').textContent =
+    mode === 'vs-ai' ? 'AI' : 'Player 2';
+
+  showGame();
+  initBoard();
+}
+
+/* ═══════════════════════════════════
+   BOARD
+═══════════════════════════════════ */
+
+/**
+ * Builds the 10×10 board array and renders all tiles.
+ */
+function initBoard() {
+  board = [];
+  for (let r = 0; r < 10; r++) {
+    board[r] = [];
+    for (let c = 0; c < 10; c++) {
+      board[r][c] = { letter: null, owner: null, row: r, col: c, highlighted: false };
+    }
+  }
+  scores      = { p1: 0, p2: 0 };
+  currentTurn = 'p1';
+  gameOver    = false;
+  scoredPaths = new Set();
+  lastWord    = '';
+  renderBoard();
+  updateHUD();
+}
+
+/**
+ * Renders all 100 tiles into the board grid using a DocumentFragment.
+ * Called once on init; subsequent updates go through updateTileEl().
  */
 function renderBoard() {
   const grid = document.getElementById('board');
-  if (!grid) return;
-
-  const fragment = document.createDocumentFragment();
-
-  for (let r = 0; r < BOARD_SIZE; r++) {
-    for (let c = 0; c < BOARD_SIZE; c++) {
-      const tileEl = createTileElement(r, c);
-      fragment.appendChild(tileEl);
+  const frag = document.createDocumentFragment();
+  for (let r = 0; r < 10; r++) {
+    for (let c = 0; c < 10; c++) {
+      frag.appendChild(createTileEl(r, c));
     }
   }
-
-  // Clear and append once
   grid.innerHTML = '';
-  grid.appendChild(fragment);
+  grid.appendChild(frag);
 }
+
 /**
- * Creates a single tile DOM element with all attributes and listeners.
- * Each tile is a clickable grid cell with proper ARIA labels.
- * @param {number} r - Row index (0-9)
- * @param {number} c - Column index (0-9)
- * @returns {HTMLElement} - The created div element
+ * Creates a single tile DOM element.
+ * @param {number} r
+ * @param {number} c
+ * @returns {HTMLElement}
  */
-function createTileElement(r, c) {
+function createTileEl(r, c) {
   const el = document.createElement('div');
   el.className = 'tile';
-  el.dataset.r = r.toString();
-  el.dataset.c = c.toString();
+  el.dataset.r = r;
+  el.dataset.c = c;
   el.setAttribute('role', 'gridcell');
   el.setAttribute('tabindex', '0');
   el.setAttribute('aria-label', `Row ${r + 1}, Column ${c + 1}, empty`);
-
-  // Click handler for placing letter
   el.addEventListener('click', onTileClick);
-
-  // Keyboard accessibility (Enter/Space triggers same action)
-  el.addEventListener('keydown', (e) => {
+  el.addEventListener('keydown', e => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onTileClick.call(el, e);
     }
   });
-
   return el;
 }
 
+/* ═══════════════════════════════════
+   TILE INTERACTION
+═══════════════════════════════════ */
+
 /**
- * Handles when a player taps an empty tile.
- * Opens the bottom-sheet letter picker modal for selection.
- * @param {Event} e - The click event
- * @returns {void}
+ * Handles a tile click or keypress.
+ * Ignores filled cells, the wrong player's turn, or a finished game.
  */
-function onTileClick(e) {
-  // Don't allow clicks if game is over
+function onTileClick() {
   if (gameOver) return;
-
-  // In AI mode, don't let human click during AI turn
-  if (gameMode === 'vs-ai' && currentTurn === 'p2') return;
-
+  // Block P1 from clicking during AI turn
+  if (currentTurn === 'p2' && GAME_MODE === 'vs-ai') return;
   const r = parseInt(this.dataset.r, 10);
   const c = parseInt(this.dataset.c, 10);
-
-  // Block clicking on already-filled tiles
-  if (board[r][c].letter !== null) return;
-
-  // Store which tile was tapped, open modal  pendingCell = { r, c };
+  if (board[r][c].letter) return;
+  pendingCell = { r, c };
   showLetterModal();
 }
 
 /**
- * Shows the bottom-sheet letter picker modal after tile tap.
- * Populates the 26-letter grid dynamically with DocumentFragment.
- * @returns {void}
+ * Builds and opens the bottom-sheet letter picker.
  */
 function showLetterModal() {
   const grid = document.getElementById('letter-grid');
-  if (!grid) return;
-
-  const fragment = document.createDocumentFragment();
-
-  // Build A-Z button row
+  const frag = document.createDocumentFragment();
   for (let i = 0; i < 26; i++) {
-    const letter = String.fromCharCode(65 + i); // 65 = 'A'
+    const letter = String.fromCharCode(65 + i);
     const btn = document.createElement('button');
     btn.className = 'letter-btn';
     btn.textContent = letter;
-    btn.setAttribute('role', 'option');
-    btn.setAttribute('aria-label', `Letter ${letter}`);
+    btn.setAttribute('aria-label', `Place letter ${letter}`);
     btn.addEventListener('click', () => onLetterChosen(letter));
-    fragment.appendChild(btn);
+    frag.appendChild(btn);
   }
-
-  // Replace existing letters
   grid.innerHTML = '';
-  grid.appendChild(fragment);
-
-  // Show modal
+  grid.appendChild(frag);
   document.getElementById('letter-modal').classList.remove('hidden');
+  // Focus first button for keyboard users
+  requestAnimationFrame(() => grid.querySelector('.letter-btn')?.focus());
 }
 
 /**
- * Called when player selects a letter from the modal.
- * Places the letter on the previously-tapped tile.
- * @param {string} letter - Selected letter (A-Z uppercase)
- * @returns {void}
+ * Called when a letter button is tapped in the picker.
+ * @param {string} letter
  */
 function onLetterChosen(letter) {
-  // Hide modal immediately
   document.getElementById('letter-modal').classList.add('hidden');
-
   if (!pendingCell) return;
-
-  // Place the letter on the board
   placeLetterOnBoard(pendingCell.r, pendingCell.c, letter, currentTurn);
-  pendingCell = null;}
+  pendingCell = null;
+}
+
+/* ═══════════════════════════════════
+   PLACEMENT & SCORING
+═══════════════════════════════════ */
 
 /**
- * Places a letter on the board at given coordinates.
- * Runs word detection, updates score if words found, switches turn.
- * @param {number} r - Row index to place
- * @param {number} c - Column index to place
- * @param {string} letter - Letter character to place
- * @param {string} owner - Who placed it ('p1', 'p2', or 'ai')
- * @returns {void}
+ * Places a letter on the board, detects words, updates scores,
+ * then switches turn (or triggers AI).
+ * @param {number} r
+ * @param {number} c
+ * @param {string} letter
+ * @param {string} owner — 'p1' | 'p2' | 'ai'
  */
 function placeLetterOnBoard(r, c, letter, owner) {
-  // Update board data
   board[r][c].letter = letter;
-  board[r][c].owner = owner;
+  board[r][c].owner  = owner;
+  updateTileEl(r, c);
 
-  // Re-render only this one tile (delta rendering - no full board redraw)
-  updateTileElement(r, c);
-
-  // If Trie is loaded, detect words
   if (trie) {
     const words = detectWords(board, r, c, trie);
-
     if (words.length > 0) {
-      let points = 0;
+      let pts = 0;
       const cellsToFlash = new Set();
 
-      // Process all valid words
-      for (const wordObj of words) {
-        // Create unique path key for deduplication
-        const pathKey = wordObj.cells.map(([rr, cc]) => `${rr},${cc}`).join('|');
-
-        // Skip if this exact path already scored
-        if (scoredPaths.has(pathKey)) continue;
-
-        // Mark as scored
-        scoredPaths.add(pathKey);
-        points += scoreWord(wordObj.word);
-        lastWords.push(wordObj.word);
-
-        // Collect cells to flash
-        for (const [rr, cc] of wordObj.cells) {
-          cellsToFlash.add(`${rr},${cc}`);
-        }
+      for (const { word, cells } of words) {
+        const key = cells.map(([rr, cc]) => `${rr},${cc}`).join('|');
+        if (scoredPaths.has(key)) continue;
+        scoredPaths.add(key);
+        pts += scoreWord(word);
+        lastWord = word;
+        for (const [rr, cc] of cells) cellsToFlash.add(`${rr},${cc}`);
       }
 
-      // Award points to correct player
+      // AI tiles score to P2
       const scoreOwner = owner === 'ai' ? 'p2' : owner;
-      scores[scoreOwner] += points;
+      scores[scoreOwner] += pts;
       updateHUD();
-      // Flash all scored cells with animation
       flashCells(cellsToFlash);
-
-      // Check for win condition before switching turns
       if (checkWin()) return;
     }
   }
 
-  // Normal turn switching
   switchTurn();
 }
 
 /**
- * Updates a single tile DOM element without full board re-render.
- * Used for delta rendering optimization — never called in loops.
- * @param {number} r - Row index
- * @param {number} c - Column index
- * @returns {void}
+ * Updates a single tile element to reflect board state.
+ * Only touches the one changed cell — never re-renders full board.
+ * @param {number} r
+ * @param {number} c
  */
-function updateTileElement(r, c) {
-  const selector = `.tile[data-r="${r}"][data-c="${c}"]`;
-  const el = document.querySelector(selector);
+function updateTileEl(r, c) {
+  const el = document.querySelector(`.tile[data-r="${r}"][data-c="${c}"]`);
   if (!el) return;
-
   const cell = board[r][c];
-
-  // Update content and classes
   el.textContent = cell.letter || '';
-  el.className = 'tile tile--filled tile--owner-' + cell.owner;
-
-  // Update ARIA label for accessibility
-  let ownerLabel = 'empty';
-  if (cell.owner === 'p1') ownerLabel = 'Player 1';
-  else if (cell.owner === 'ai') ownerLabel = 'AI';
-  else if (cell.owner === 'p2') ownerLabel = 'Player 2';
-
-  el.setAttribute('aria-label', `Letter ${cell.letter}, owned by ${ownerLabel}`);
+  el.className = `tile tile--filled tile--owner-${cell.owner}`;
+  const ownerName = cell.owner === 'p1' ? 'Player 1'
+                  : cell.owner === 'ai'  ? 'AI'
+                  : 'Player 2';
+  el.setAttribute('aria-label', `Letter ${cell.letter}, owned by ${ownerName}`);
+  el.removeAttribute('tabindex');
 }
 
 /**
- * Animates scored cells with a green flash effect.
- * Uses requestAnimationFrame for GPU-accelerated animations.
- * @param {Set<string>} cellKeys - Set of "row,col" strings to animate
- * @returns {void}
+ * Flashes scored cells using requestAnimationFrame (GPU-only: transform + opacity).
+ * @param {Set<string>} cellKeys — Set of "r,c" strings
  */
 function flashCells(cellKeys) {
   for (const key of cellKeys) {
     const [r, c] = key.split(',').map(Number);
-    const selector = `.tile[data-r="${r}"][data-c="${c}"]`;    const el = document.querySelector(selector);
+    const el = document.querySelector(`.tile[data-r="${r}"][data-c="${c}"]`);
     if (!el) continue;
-
-    // Remove animation class to reset state
     el.classList.remove('tile--scored');
-
-    // Trigger GPU animation via requestAnimationFrame (double-RAF pattern)
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        el.classList.add('tile--scored');
-
-        // Remove after animation completes so it can re-trigger
-        setTimeout(() => {
-          el.classList.remove('tile--scored');
-        }, 700);
-      });
-    });
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      el.classList.add('tile--scored');
+      setTimeout(() => el.classList.remove('tile--scored'), 700);
+    }));
   }
 }
 
+/* ═══════════════════════════════════
+   WORD DETECTION
+═══════════════════════════════════ */
+
 /**
- * Detects all valid words formed by a newly placed letter.
- * Scans 8 directions from placed cell, extracts substrings >= 3 chars, validates against Trie.
- * @param {Array<Array<Object>>} boardState - Current board array
- * @param {number} placedRow - Row where letter was placed
- * @param {number} placedCol - Column where letter was placed
- * @param {Object} trieInstance - Loaded Trie dictionary
- * @returns {Array<Object>} - Array of {word, cells} objects
+ * Scans all 8 directions from the newly placed cell.
+ * Finds every substring ≥ 3 letters that passes trie.search().
+ * Uses a path-key Set to prevent reporting the same physical path twice.
+ *
+ * @param {Array}  board
+ * @param {number} placedRow
+ * @param {number} placedCol
+ * @param {Object} trie
+ * @returns {Array<{word:string, cells:Array}>}
  */
-function detectWords(boardState, placedRow, placedCol, trieInstance) {
-  // 8 direction vectors: right, left, down, up, and 4 diagonals
-  const directions = [
-    [0, 1], [0, -1], [1, 0], [-1, 0],
-    [1, 1], [1, -1], [-1, 1], [-1, -1]
-  ];
-
+function detectWords(board, placedRow, placedCol, trie) {
+  const dirs  = [[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]];
   const found = [];
-  const seen = new Set(); // Deduplication within single detection call
+  const seen  = new Set();
 
-  for (const [dr, dc] of directions) {
-    // Step 1: Walk backward to find line start
-    let startR = placedRow;
-    let startC = placedCol;
-
-    while (inBounds(startR - dr, startC - dc) && boardState[startR - dr][startC - dc].letter) {
-      startR -= dr;
-      startC -= dc;
+  for (const [dr, dc] of dirs) {
+    // Walk backward to line start
+    let sr = placedRow, sc = placedCol;
+    while (inBounds(sr - dr, sc - dc) && board[sr - dr][sc - dc].letter) {
+      sr -= dr; sc -= dc;
     }
 
-    // Step 2: Walk forward collecting letters and coordinates    const line = [];
-    const coords = [];
-    let r = startR;
-    let c = startC;
-
-    while (inBounds(r, c) && boardState[r][c].letter) {
-      line.push(boardState[r][c].letter);
+    // Collect full line
+    const line = [], coords = [];
+    let r = sr, c = sc;
+    while (inBounds(r, c) && board[r][c].letter) {
+      line.push(board[r][c].letter);
       coords.push([r, c]);
-      r += dr;
-      c += dc;
+      r += dr; c += dc;
     }
 
-    // Must be at least 3 letters long
     if (line.length < 3) continue;
 
-    // Find where the placed letter sits in this line
-    const placedIndex = coords.findIndex(([rr, cc]) => rr === placedRow && cc === placedCol);
-    if (placedIndex === -1) continue;
+    // Index of the placed cell in this line
+    const pi = coords.findIndex(([rr, cc]) => rr === placedRow && cc === placedCol);
+    if (pi === -1) continue;
 
-    // Step 3: Extract all substrings >= 3 that include placed index
-    for (let start = 0; start <= placedIndex; start++) {
-      for (let end = placedIndex + 1; end <= line.length; end++) {
-        if (end - start < 3) continue;
-
-        const word = line.slice(start, end).join('');
-        const cells = coords.slice(start, end);
-        const key = cells.map(([rr, cc]) => `${rr},${cc}`).join('|');
-
+    // Extract all substrings ≥ 3 that include the placed letter
+    for (let s = 0; s <= pi; s++) {
+      for (let e = pi + 1; e <= line.length; e++) {
+        if (e - s < 3) continue;
+        const word  = line.slice(s, e).join('');
+        const cells = coords.slice(s, e);
+        const key   = cells.map(([rr, cc]) => `${rr},${cc}`).join('|');
         if (seen.has(key)) continue;
         seen.add(key);
-
-        // Validate with Trie
-        if (trieInstance.search(word)) {
-          found.push({ word, cells });
-        }
+        if (trie.search(word)) found.push({ word, cells });
       }
     }
   }
@@ -384,89 +344,67 @@ function detectWords(boardState, placedRow, placedCol, trieInstance) {
 }
 
 /**
- * Checks if row/column indices are within board bounds (0-9).
- * @param {number} r - Row index
- * @param {number} c - Column index
- * @returns {boolean} - True if within bounds
+ * @param {number} r
+ * @param {number} c
+ * @returns {boolean}
  */
-function inBounds(r, c) {
-  return r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE;}
+function inBounds(r, c) { return r >= 0 && r < 10 && c >= 0 && c < 10; }
 
 /**
- * Calculates points earned for a scored word.
- * 3 letters = 1pt, 4 letters = 2pts, 5+ letters = 3pts.
- * @param {string} word - The scored word string
- * @returns {number} - Points value (1, 2, or 3)
+ * Returns points for a word by length.
+ * @param {string} word
+ * @returns {number}
  */
 function scoreWord(word) {
-  const len = word.length;
-  if (len >= 5) return 3;
-  if (len === 4) return 2;
-  return 1;
+  return word.length >= 5 ? 3 : word.length === 4 ? 2 : 1;
 }
 
+/* ═══════════════════════════════════
+   TURN MANAGEMENT
+═══════════════════════════════════ */
+
 /**
- * Switches turn between players. Triggers AI move in vs-ai mode.
- * Calls AI Select Move wrapped in setTimeout to not block UI paint.
- * @returns {void}
+ * Switches active player and triggers AI move if needed.
  */
 function switchTurn() {
-  // Toggle turn
   currentTurn = currentTurn === 'p1' ? 'p2' : 'p1';
-
-  // Update HUD
   updateHUD();
-  updateTurnBadge();
 
-  // If vs AI and it's P2's turn (the AI), trigger AI bot
-  if (gameMode === 'vs-ai' && currentTurn === 'p2' && typeof window.aiSelectMove === 'function') {
+  if (currentTurn === 'p2' && GAME_MODE === 'vs-ai') {
+    if (typeof aiSelectMove !== 'function') {
+      console.warn('[WPB] ai-bot.js not loaded — skipping AI turn');
+      switchTurn(); // skip back
+      return;
+    }
     showAIThinking(true);
-
-    // Always wrap AI in setTimeout to prevent UI blocking
-    setTimeout(() => {
-      window.aiSelectMove(board, trie, aiDifficulty, (move) => {
-        showAIThinking(false);
-
-        // Apply AI move if one was found
-        if (move && move.row !== undefined && move.col !== undefined && move.letter) {
-          placeLetterOnBoard(move.row, move.col, move.letter, 'ai');
-        } else {
-          // Fallback: random move if AI fails
-          switchTurn();
-        }
-      });
-    }, 0);
+    aiSelectMove(board, trie, AI_DIFFICULTY, move => {
+      showAIThinking(false);
+      placeLetterOnBoard(move.row, move.col, move.letter, 'ai');
+    });
   }
 }
 
-/** * Checks win condition: 20+ points or board full.
- * Displays win modal if triggered.
- * @returns {boolean} - True if game ended
+/* ═══════════════════════════════════
+   WIN CONDITION
+═══════════════════════════════════ */
+
+/**
+ * Checks whether the game is over.
+ * @returns {boolean}
  */
 function checkWin() {
-  // Check score-based win first
   if (scores.p1 >= WIN_SCORE || scores.p2 >= WIN_SCORE) {
-    const winner = scores.p1 >= WIN_SCORE ? 'Player 1' : 'Player 2';
-    showWin(winner);
+    showWinModal(scores.p1 >= WIN_SCORE ? 'Player 1' : (GAME_MODE === 'vs-ai' ? 'AI' : 'Player 2'));
     return true;
   }
 
-  // Check if board is completely full
-  let filledCount = 0;
-  for (let r = 0; r < BOARD_SIZE; r++) {
-    for (let c = 0; c < BOARD_SIZE; c++) {
-      if (board[r][c].letter) filledCount++;
-    }
-  }
-
-  if (filledCount === BOARD_SIZE * BOARD_SIZE) {
-    // Draw by highest score
-    let winner;
-    if (scores.p1 > scores.p2) winner = 'Player 1';
-    else if (scores.p2 > scores.p1) winner = 'Player 2';
-    else winner = 'Nobody';
-
-    showWin(winner);
+  let filled = 0;
+  for (let r = 0; r < 10; r++) for (let c = 0; c < 10; c++) if (board[r][c].letter) filled++;
+  if (filled === 100) {
+    const winner = scores.p1 > scores.p2 ? 'Player 1'
+                 : scores.p2 > scores.p1 ? (GAME_MODE === 'vs-ai' ? 'AI' : 'Player 2')
+                 : 'Nobody';
+    showWinModal(winner);
     return true;
   }
 
@@ -474,271 +412,139 @@ function checkWin() {
 }
 
 /**
- * Displays the victory screen with final scores and winner.
- * Uses the win modal overlay with HARVEST RESULT badge.
- * @param {string} winner - Winner name or 'Nobody' for tie
- * @returns {void}
+ * Shows the win modal with result + last scored word.
+ * @param {string} winner
  */
-function showWin(winner) {
+function showWinModal(winner) {
   gameOver = true;
-
-  const titleEl = document.getElementById('win-title');
-  const scoresEl = document.getElementById('win-scores');
-  const badgeEl = document.getElementById('win-badge');
-
-  // Set title and badge based on outcome
-  if (winner === 'Nobody') {
-    titleEl.textContent = "It's a Tie!";    badgeEl.textContent = 'HARVEST RESULT';
-  } else {
-    titleEl.textContent = winner + ' Wins!';
-    badgeEl.textContent = 'VICTORY';
-  }
-
-  // Show final scores
-  scoresEl.textContent = `${scores.p1} – ${scores.p2}`;
-
-  // Highlight last word if available
-  if (lastWords.length > 0) {
-    const lastWord = lastWords[lastWords.length - 1];
-    const pts = scoreWord(lastWord);
-    const lastWordEl = document.getElementById('win-last-word');
-    if (lastWordEl) {
-      lastWordEl.textContent = `Last word: "${lastWord}" (+${pts} pts)`;
-      lastWordEl.style.display = 'block';
-    }
-  }
-
-  // Show modal
+  document.getElementById('win-title').textContent =
+    winner === 'Nobody' ? "It's a tie!" : `${winner} Wins!`;
+  document.getElementById('win-scores').textContent = `${scores.p1} – ${scores.p2}`;
+  document.getElementById('win-last-word').textContent =
+    lastWord ? `Last word: ${lastWord}` : '';
   document.getElementById('win-modal').classList.remove('hidden');
 }
 
+/* ═══════════════════════════════════
+   HUD
+═══════════════════════════════════ */
+
 /**
- * Updates the HUD to display current scores and progress bars.
- * Progress bar shows percentage toward WIN_SCORE target (20).
- * @returns {void}
+ * Updates scores, progress bars, and turn badge.
  */
 function updateHUD() {
-  const p1ScoreEl = document.getElementById('p1-score');
-  const p2ScoreEl = document.getElementById('p2-score');
-  const p1ProgressEl = document.getElementById('p1-progress');
-  const p2ProgressEl = document.getElementById('p2-progress');
+  document.getElementById('p1-score').textContent = scores.p1;
+  document.getElementById('p2-score').textContent = scores.p2;
 
-  if (p1ScoreEl) p1ScoreEl.textContent = scores.p1.toString();
-  if (p2ScoreEl) p2ScoreEl.textContent = scores.p2.toString();
+  const p1Pct = Math.min((scores.p1 / WIN_SCORE) * 100, 100);
+  const p2Pct = Math.min((scores.p2 / WIN_SCORE) * 100, 100);
+  const p1Bar = document.getElementById('p1-progress');
+  const p2Bar = document.getElementById('p2-progress');
+  p1Bar.style.width = p1Pct + '%';
+  p2Bar.style.width = p2Pct + '%';
+  p1Bar.parentElement.setAttribute('aria-valuenow', scores.p1);
+  p2Bar.parentElement.setAttribute('aria-valuenow', scores.p2);
 
-  if (p1ProgressEl) {
-    const pct = Math.min((scores.p1 / WIN_SCORE) * 100, 100);
-    p1ProgressEl.style.width = pct + '%';
-  }
-
-  if (p2ProgressEl) {
-    const pct = Math.min((scores.p2 / WIN_SCORE) * 100, 100);
-    p2ProgressEl.style.width = pct + '%';
-  }
-}
-
-/** * Updates the turn indicator badge text.
- * Shows "YOUR TURN", "AI TURN", or "OPPONENT TURN".
- * @returns {void}
- */
-function updateTurnBadge() {
-  const badge = document.getElementById('turn-badge');
-  if (!badge) return;
-
+  let badgeText;
   if (currentTurn === 'p1') {
-    badge.textContent = 'YOUR TURN';
-  } else if (gameMode === 'vs-ai') {
-    badge.textContent = 'AI TURN';
+    badgeText = 'P1 Turn';
+  } else if (GAME_MODE === 'vs-ai') {
+    badgeText = 'AI Turn';
   } else {
-    badge.textContent = 'OPPONENT TURN';
+    badgeText = 'P2 Turn';
   }
+  document.getElementById('turn-badge').textContent = badgeText;
 }
 
 /**
- * Shows or hides the AI thinking indicator bubble.
- * @param {boolean} show - True to show loading state
- * @returns {void}
+ * Shows/hides the AI thinking pill.
+ * @param {boolean} show
  */
 function showAIThinking(show) {
-  const el = document.getElementById('ai-thinking');
-  if (!el) return;
-
-  if (show) {
-    el.classList.remove('hidden');
-  } else {
-    el.classList.add('hidden');
-  }
+  document.getElementById('ai-thinking').classList.toggle('hidden', !show);
 }
 
-/**
- * Resets the game to initial state.
- * Clears win modal and starts fresh board.
- * @returns {void}
- */
-function resetGame() {
+/* ═══════════════════════════════════
+   EVENT LISTENERS
+═══════════════════════════════════ */
+
+// Letter modal — cancel button
+document.getElementById('modal-cancel').addEventListener('click', () => {
+  document.getElementById('letter-modal').classList.add('hidden');
+  pendingCell = null;
+});
+
+// Win modal — play again (same mode/difficulty)
+document.getElementById('play-again').addEventListener('click', () => {
   document.getElementById('win-modal').classList.add('hidden');
   initBoard();
-}
+});
 
-/**
- * Shows the main menu overlay again.
- * Returns player to game selection screen.
- * @returns {void}
- */
-function showMenu() {
-  document.getElementById('win-modal').classList.add('hidden');  document.getElementById('menu-overlay').classList.remove('hidden');
-  gameOver = true;
-}
+// Win modal — back to menu
+document.getElementById('win-home').addEventListener('click', () => {
+  showHome();
+});
 
-/**
- * Starts a new game with specified mode and difficulty.
- * Hides menu overlay, sets game parameters, initializes board.
- * @param {string} mode - 'vs-ai' or 'vs-human'
- * @param {string} difficulty - 'easy', 'medium', or 'hard'
- * @returns {void}
- */
-function startGame(mode, difficulty) {
-  gameMode = mode;
-  aiDifficulty = difficulty;
+// HUD — home button
+document.getElementById('btn-home').addEventListener('click', () => {
+  showHome();
+});
 
-  // Hide menu
-  document.getElementById('menu-overlay').classList.add('hidden');
+// Theme toggle
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme');
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+});
 
-  // Update opponent label based on mode
-  const p2Label = document.getElementById('p2-label');
-  if (p2Label) {
-    p2Label.textContent = mode === 'vs-ai' ? 'AI' : 'OPPONENT';
-  }
-
-  // Ready for gameplay
-  gameOver = false;
-  initBoard();
-}
-
-/**
- * Sets up all DOM event listeners for the game.
- * Modal controls, buttons, keyboard events, etc.
- * @returns {void}
- */
-function initEventListeners() {
-  // --- Letter Modal Controls ---
-  const modalCancel = document.getElementById('modal-cancel');
-  const modalClose = document.getElementById('modal-close');
-  const modalPlace = document.getElementById('modal-place');
-
-  if (modalCancel) {
-    modalCancel.addEventListener('click', () => {
-      document.getElementById('letter-modal').classList.add('hidden');
-      pendingCell = null;
+// Difficulty buttons
+document.querySelectorAll('.diff-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.diff-btn').forEach(b => {
+      b.classList.remove('diff-btn--active');
+      b.setAttribute('aria-pressed', 'false');
     });
-  }
-
-  if (modalClose) {
-    modalClose.addEventListener('click', () => {
-      document.getElementById('letter-modal').classList.add('hidden');      pendingCell = null;
-    });
-  }
-
-  if (modalPlace) {
-    modalPlace.addEventListener('click', () => {
-      document.getElementById('letter-modal').classList.add('hidden');
-      if (pendingCell) {
-        // Default to 'E' if user wants quick placement without selecting
-        placeLetterOnBoard(pendingCell.r, pendingCell.c, 'E', currentTurn);
-        pendingCell = null;
-      }
-    });
-  }
-
-  // --- Win Modal Controls ---
-  const playAgainBtn = document.getElementById('play-again');
-  const returnRootsBtn = document.getElementById('return-roots');
-
-  if (playAgainBtn) {
-    playAgainBtn.addEventListener('click', resetGame);
-  }
-
-  if (returnRootsBtn) {
-    returnRootsBtn.addEventListener('click', showMenu);
-  }
-
-  // --- Menu Difficulty Selection ---
-  const diffButtons = document.querySelectorAll('.diff-btn');
-  diffButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      // Deselect all
-      diffButtons.forEach(b => {
-        b.classList.remove('selected');
-        b.setAttribute('aria-checked', 'false');
-      });
-
-      // Select this one
-      btn.classList.add('selected');
-      btn.setAttribute('aria-checked', 'true');
-      aiDifficulty = btn.dataset.diff;
-    });
+    btn.classList.add('diff-btn--active');
+    btn.setAttribute('aria-pressed', 'true');
   });
+});
 
-  // --- Menu Play Buttons ---
-  const playAiBtn = document.getElementById('menu-play-ai');
-  const playFriendBtn = document.getElementById('menu-play-friend');
+// Play buttons
+document.getElementById('btn-vs-ai').addEventListener('click', () => {
+  const diff = document.querySelector('.diff-btn--active')?.dataset.diff || 'medium';
+  startGame('vs-ai', diff);
+});
 
-  if (playAiBtn) {
-    playAiBtn.addEventListener('click', () => {      startGame('vs-ai', aiDifficulty);
-    });
+document.getElementById('btn-vs-friend').addEventListener('click', () => {
+  startGame('vs-human', 'medium');
+});
+
+// Close letter modal on overlay tap (outside bottom sheet)
+document.getElementById('letter-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) {
+    document.getElementById('letter-modal').classList.add('hidden');
+    pendingCell = null;
   }
+});
 
-  if (playFriendBtn) {
-    playFriendBtn.addEventListener('click', () => {
-      startGame('vs-human', aiDifficulty);
-    });
+/* ═══════════════════════════════════
+   BOOT SEQUENCE
+═══════════════════════════════════ */
+
+// Apply theme before any paint
+initTheme();
+
+// Load dictionary, then reveal the menu
+buildTrieAsync(
+  t => {
+    trie = t;
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('menu-body').classList.remove('hidden');
+  },
+  err => {
+    // Dictionary failed — still show menu but word detection won't work
+    console.error('[WPB] Dictionary failed to load:', err);
+    const loadEl = document.getElementById('loading-state');
+    loadEl.querySelector('span').textContent = '⚠ Dictionary unavailable — scoring disabled';
+    document.getElementById('menu-body').classList.remove('hidden');
   }
-
-  // --- Action Bar Buttons ---
-  const regrowBtn = document.getElementById('btn-regrow');
-  const senseBtn = document.getElementById('btn-sense');
-
-  if (regrowBtn) {
-    regrowBtn.addEventListener('click', () => {
-      // Regrow: clear board and restart
-      const confirmMsg = confirm('🌱 REGROW: This will reset the board. Continue?');
-      if (confirmMsg) {
-        initBoard();
-      }
-    });
-  }
-
-  if (senseBtn) {
-    senseBtn.addEventListener('click', () => {
-      // SENSE: Show hint (placeholder functionality)
-      const hintBar = document.getElementById('hint-bar-text');
-      if (hintBar) {
-        hintBar.textContent = 'SENSE: Look for opportunities to form 5+ letter words!';
-      }
-      alert('💡 SENSE: When the forest feels quiet, use Sense to reveal a hidden word path.');
-    });
-  }
-}
-
-/**
- * Main initialization function.
- * Called when DOM is ready. Builds Trie, then starts game.
- * @returns {void}
- */
-function init() {
-  // Attach all event listeners
-  initEventListeners();
-
-  // Build Trie dictionary asynchronously (non-blocking)
-  // Pass callback to start game when dictionary is ready
-  buildTrieAsync((loadedTrie) => {
-    trie = loadedTrie;
-    initBoard();  });
-}
-
-// DOMContentLoaded guard — ensures DOM is ready before execution
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init();
-}
+);
