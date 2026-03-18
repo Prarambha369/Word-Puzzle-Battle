@@ -1,39 +1,186 @@
 <!DOCTYPE html>
 <!--
-  Word Puzzle Battle
-  Copyright (c) 2026 Prarambha Bashyal. All rights reserved.
-  https://github.com/Prarambha369/Word-Puzzle-Battle
-  License: Word Puzzle Battle Source-Available License v1.0
+ * Word Puzzle Battle
+ * Copyright (c) 2026 Prarambha Bashyal. All rights reserved.
+ *
+ * Source: https://github.com/Prarambha369/word-puzzle-battle
+ * License: Word Puzzle Battle Source-Available License v1.0
+ *
+ * Free for personal/non-commercial use.
+ * Commercial use requires a 27% gross revenue royalty agreement.
+ * Attribution to the original author is mandatory in all derivatives.
 -->
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="A competitive turn-based word-building game. Place letters, form words, first to 20 wins." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="A competitive turn-based word-building game. Plant letters, grow words, harvest points." />
   <meta property="og:title" content="Word Puzzle Battle" />
-  <meta property="og:description" content="Place letters. Form words. First to 20 wins." />
-  <meta name="theme-color" content="#6c63ff" />
+  <meta property="og:description" content="Plant letters. Grow words. First to 20 wins." />
+  <meta property="og:image" content="assets/og-image.png" />
+  <meta property="og:url" content="https://word-puzzle-battle.vercel.app" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="assets/og-image.png" />
+  <meta name="theme-color" content="#004643" />
   <title>Word Puzzle Battle</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="assets/icons/icon-192.png" />
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="WPB" />
+  <!-- Fonts: DM Sans (UI) + Space Mono (tiles, headings, lore) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&family=Space+Mono:wght@400;700&display=swap"
+  />
   <link rel="stylesheet" href="style.css" />
-  <!-- Vercel Web Analytics -->
-  <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
 </head>
 <body>
 
   <!-- ═══════════════════════════════════════════
-       HOME SCREEN — shown on load
+       HOME SCREEN
   ════════════════════════════════════════════ -->
   <div id="home-screen" class="home-screen" role="main">
 
     <div class="home-header">
+      <div class="home-logo-lockup">
+        <div class="home-logo" aria-hidden="true">W</div>
+        <span class="home-system-label">ROOT SYSTEM: ACTIVE</span>
+      </div>
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">☀</button>
     </div>
 
     <div class="home-hero">
-      <div class="home-logo" aria-hidden="true">W</div>
-      <h1 class="home-title">Word Puzzle<br>Battle</h1>
+      <h1 class="home-title">
+        <span class="title-word">WORD</span>
+        <span class="title-puzzle">PUZZLE</span>
+        <span class="title-battle">BATTLE</span>
+      </h1>
+      <p class="home-tagline">EXPANSION PROTOCOL INITIATED</p>
+    </div>
+
+    <div id="loading-state" class="loading-state" aria-live="polite">
+      <div class="loading-spinner" aria-hidden="true"></div>
+      <span class="loading-label">GROWING WORD TREE…</span>
+    </div>
+
+    <div id="menu-body" class="menu-body hidden">
+      <div class="difficulty-section">
+        <p class="section-label">SELECT DIFFICULTY</p>
+        <div class="difficulty-group" role="group" aria-label="Difficulty">
+          <button class="diff-btn" data-diff="easy"   aria-pressed="false">EASY</button>
+          <button class="diff-btn diff-btn--active" data-diff="medium" aria-pressed="true">MED</button>
+          <button class="diff-btn" data-diff="hard"   aria-pressed="false">HARD</button>
+        </div>
+      </div>
+
+      <div class="play-buttons">
+        <button class="btn-play-primary" id="btn-vs-ai">🤖 PLAY VS AI</button>
+        <button class="btn-play-ghost"   id="btn-vs-friend">👥 PLAY VS FRIEND</button>
+      </div>
+
+      <div class="home-footer-row">
+        <button class="footer-btn" id="btn-settings"    aria-label="Settings">⚙</button>
+        <p class="home-footer">By Prarambha Bashyal · Vanilla JS · PWA</p>
+        <button class="footer-btn" id="btn-how-to-play" aria-label="How to play">?</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       GAME SCREEN
+  ════════════════════════════════════════════ -->
+  <div id="game-screen" class="game-screen hidden">
+
+    <header class="hud" role="banner">
+      <div class="player-card" id="p1-card">
+        <span class="player-label">YOU</span>
+        <span class="score" id="p1-score">0</span>
+        <div class="progress-bar"
+             role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="20"
+             aria-label="Player 1 progress">
+          <div class="progress-fill" id="p1-progress"></div>
+        </div>
+      </div>
+
+      <div class="hud-center">
+        <div class="turn-badge" id="turn-badge" aria-live="polite">YOUR TURN</div>
+        <button class="home-btn" id="btn-home" aria-label="Return to menu">⌂</button>
+      </div>
+
+      <div class="player-card right" id="p2-card">
+        <span class="player-label" id="p2-label">GUEST</span>
+        <span class="score" id="p2-score">0</span>
+        <div class="progress-bar"
+             role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="20"
+             aria-label="Player 2 progress">
+          <div class="progress-fill" id="p2-progress"></div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div class="board-wrap">
+        <div class="board" id="board" role="grid" aria-label="Game board, 10 by 10"></div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       LETTER PICKER — bottom sheet
+  ════════════════════════════════════════════ -->
+  <div class="modal-overlay hidden" id="letter-modal"
+       role="dialog" aria-modal="true" aria-label="Choose a letter to plant">
+    <div class="bottom-sheet">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <p class="sheet-title">PLANT A LETTER</p>
+      <div class="letter-grid" id="letter-grid" role="group" aria-label="Alphabet"></div>
+      <button class="btn-ghost" id="modal-cancel">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       WIN MODAL
+  ════════════════════════════════════════════ -->
+  <div class="modal-overlay hidden" id="win-modal"
+       role="dialog" aria-modal="true" aria-label="Game over">
+    <div class="win-card">
+      <p class="win-label">HARVEST RESULT</p>
+      <div class="win-title" id="win-title">PLAYER 1 WINS</div>
+      <div class="win-scores"    id="win-scores"></div>
+      <div class="win-last-word" id="win-last-word"></div>
+      <button class="btn-primary" id="play-again">GROW AGAIN</button>
+      <button class="btn-ghost"   id="win-home" style="margin-top:8px">RETURN TO ROOTS</button>
+    </div>
+  </div>
+
+  <!-- AI status pill -->
+  <div class="ai-thinking hidden" id="ai-thinking" aria-live="polite">
+    GROWING WORD TREE…
+  </div>
+
+  <script src="trie.js"></script>
+  <script src="game.js"></script>
+  <script src="ai-bot.js"></script>
+  <script>
+    /* Theme init — runs before paint to prevent flash */
+    (function () {
+      const stored = localStorage.getItem('wpb-theme');
+      const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', stored || (dark ? 'dark' : 'light'));
+    })();
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./service-worker.js')
+        .catch(e => console.warn('[WPB] SW failed:', e));
+    }
+  </script>
+</body>
+</html>
       <p class="home-tagline">Place letters · Form words · First to 20 wins</p>
     </div>
 
