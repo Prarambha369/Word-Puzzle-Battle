@@ -1,0 +1,22 @@
+{
+  "name": "word-puzzle-battle",
+  "version": "1.0.4",
+  "description": "A competitive turn-based word-building game. Plant letters, grow words, harvest points.",
+  "type": "module",
+  "scripts": {
+    "dev": "python3 -m http.server 8000",
+    "build": "echo 'Static site - no build required'",
+    "lint": "echo 'No linter configured'"
+  },
+  "keywords": [
+    "word-game",
+    "puzzle",
+    "game",
+    "vercel"
+  ],
+  "author": "Prarambha Bashyal",
+  "license": "SEE LICENSE IN LICENSE",
+  "dependencies": {
+    "@vercel/speed-insights": "^1.0.14"
+  }
+}
