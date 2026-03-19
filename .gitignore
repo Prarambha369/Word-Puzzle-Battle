@@ -1,0 +1,39 @@
+# ── Node (not used in frontend, only if you add a server later) ──
+node_modules/
+npm-debug.log*
+package-lock.json
+
+# ── OS ────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+
+# ── Editor ────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Build artifacts ───────────────────────────────────────────────
+dist/
+.output/
+
+# ── Mobile build artifacts ────────────────────────────────────────
+android/.gradle/
+android/app/build/
+ios/Pods/
+ios/App/App.xcworkspace/
+
+# ── Desktop build artifacts ───────────────────────────────────────
+src-tauri/target/
+
+# ── Keys & certs ──────────────────────────────────────────────────
+*.pem
+*.key
+*.p12
+
+# NOTE: web/config.js is NOT gitignored.
+# Firebase apiKey is a public identifier — safe to commit.
+# Your database is protected by Firebase Security Rules.
+# See: https://firebase.google.com/docs/projects/api-keys

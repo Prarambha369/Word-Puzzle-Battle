@@ -2,7 +2,7 @@
 <!--
  * Word Puzzle Battle
  * Copyright (c) 2026 Prarambha Bashyal. All rights reserved.
- * Source: https://github.com/Prarambha369/word-puzzle-battle
+ * Source: https://github.com/Prarambha369/Word-Puzzle-Battle
  * License: Word Puzzle Battle Source-Available License v1.0
 -->
 <html lang="en" data-theme="dark">
@@ -14,13 +14,26 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="WPB" />
+
+  <!-- Open Graph / social sharing -->
+  <meta property="og:title"       content="Word Puzzle Battle" />
+  <meta property="og:description" content="Plant letters. Grow words. First to 20 wins." />
+  <meta property="og:url"         content="https://wordpuzzlebattle.web.app" />
+  <meta property="og:type"        content="website" />
+
   <title>Word Puzzle Battle</title>
   <link rel="manifest" href="manifest.json" />
+
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&family=Space+Mono:wght@400;700&display=swap" />
+
+  <!-- Game styles -->
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="tutorial.css" />
+  <link rel="stylesheet" href="multiplayer.css" />
+  <link rel="stylesheet" href="auth.css" />
 </head>
 <body>
 
@@ -57,7 +70,7 @@
           </div>
         </header>
 
-        <!-- Hero card — inline SVG forest scene -->
+        <!-- Hero card — inline SVG forest scene, no external images needed -->
         <div class="hero-card" aria-hidden="true">
           <svg class="hero-svg" viewBox="0 0 360 220"
                xmlns="http://www.w3.org/2000/svg"
@@ -82,8 +95,9 @@
             </defs>
             <rect width="360" height="220" fill="url(#hSky)"/>
             <rect width="360" height="220" fill="url(#hGlow)"/>
-            <polygon points="32,171 2,208 62,208"    fill="#0d2010"/>
-            <polygon points="32,133 16,165 49,165"   fill="#0d2010"/>
+            <!-- Pine tree silhouettes, back to front -->
+            <polygon points="32,171 2,208 62,208"     fill="#0d2010"/>
+            <polygon points="32,133 16,165 49,165"    fill="#0d2010"/>
             <polygon points="336,168 304,208 360,208" fill="#0d2010"/>
             <polygon points="336,128 318,162 354,162" fill="#0d2010"/>
             <polygon points="76,154  33,208 119,208"  fill="#0f2612"/>
@@ -92,12 +106,12 @@
             <polygon points="295,88  269,138 321,138" fill="#0f2612"/>
             <polygon points="120,137 63,208 177,208"  fill="#112a14"/>
             <polygon points="120,65  89,125 151,125"  fill="#112a14"/>
-            <polygon points="252,127 187,208 317,208"  fill="#112a14"/>
-            <polygon points="252,46  216,114 288,114"  fill="#112a14"/>
+            <polygon points="252,127 187,208 317,208" fill="#112a14"/>
+            <polygon points="252,46  216,114 288,114" fill="#112a14"/>
             <polygon points="165,123 97,208 233,208"  fill="#132e16"/>
             <polygon points="165,38  128,109 202,109" fill="#132e16"/>
-            <polygon points="208,112 131,208 285,208"  fill="#122c15"/>
-            <polygon points="208,15  165,96  251,96"   fill="#122c15"/>
+            <polygon points="208,112 131,208 285,208" fill="#122c15"/>
+            <polygon points="208,15  165,96  251,96"  fill="#122c15"/>
             <rect x="0" y="205" width="360" height="15" fill="#091609"/>
             <rect width="360" height="220" fill="url(#hMist)"/>
             <!-- Spiral logo -->
@@ -124,18 +138,21 @@
           <p class="home-tagline">EXPANSION PROTOCOL INITIATED</p>
         </div>
 
+        <!-- Loading — shown while trie builds -->
         <div id="loading-state" class="loading-state" aria-live="polite">
           <div class="loading-spinner" aria-hidden="true"></div>
           <span class="loading-label">GROWING WORD TREE…</span>
         </div>
 
+        <!-- Menu — revealed once trie is ready -->
         <div id="menu-body" class="menu-body hidden">
+
           <div class="difficulty-section">
             <p class="section-label">SELECT DIFFICULTY</p>
             <div class="difficulty-group" role="group" aria-label="Difficulty">
-              <button class="diff-btn" data-diff="easy" aria-pressed="false">EASY</button>
+              <button class="diff-btn" data-diff="easy"   aria-pressed="false">EASY</button>
               <button class="diff-btn diff-btn--active" data-diff="medium" aria-pressed="true">MED</button>
-              <button class="diff-btn" data-diff="hard" aria-pressed="false">HARD</button>
+              <button class="diff-btn" data-diff="hard"   aria-pressed="false">HARD</button>
             </div>
           </div>
 
@@ -169,10 +186,10 @@
                    fill="none" stroke="currentColor" stroke-width="2"
                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="3"/>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06
-                         a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09
-                         A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06
-                         a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83
+                         l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21
+                         a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33
+                         l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15
                          a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9
                          a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06
                          A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09
@@ -192,7 +209,8 @@
               </svg>
             </button>
           </div>
-        </div>
+
+        </div><!-- /menu-body -->
       </div><!-- /home-screen -->
 
       <!-- GAME SCREEN ─────────────────────────────────────────── -->
@@ -238,10 +256,11 @@
     </div><!-- /tab-panel[battle] -->
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         LOBBY TAB
+         LOBBY TAB — content injected by firebase-multiplayer.js
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <div class="tab-panel hidden" data-tab="lobby">
-      <div class="stub-screen">
+      <!-- firebase-multiplayer.js renders the full lobby UI here on first tab click -->
+      <div class="stub-screen" id="lobby-loading-stub">
         <div class="stub-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -252,13 +271,13 @@
           </svg>
         </div>
         <h2 class="stub-title">Multiplayer Lobby</h2>
-        <p class="stub-sub">Real-time battles via Socket.IO</p>
-        <span class="stub-badge">PHASE 2</span>
+        <p class="stub-sub">Real-time battles via Firebase</p>
+        <span class="stub-badge">TAP TO LOAD</span>
       </div>
     </div>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         GARDEN TAB
+         GARDEN TAB — player profile & stats
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <div class="tab-panel hidden" data-tab="garden">
       <div class="garden-screen">
@@ -266,13 +285,14 @@
           <h2 class="settings-title">GARDEN</h2>
         </header>
         <div class="garden-body">
+
           <div class="garden-hero">
             <div class="garden-avatar-wrap">
               <div class="garden-avatar" id="garden-avatar" aria-hidden="true">P</div>
               <div class="garden-avatar-badge" aria-hidden="true">🌱</div>
             </div>
             <p class="garden-player-name" id="garden-player-name">—</p>
-            <p class="garden-status">STATUS: GROWTH ACTIVE</p>
+            <p class="garden-status" id="garden-status">STATUS: GROWTH ACTIVE</p>
           </div>
 
           <div class="garden-stats">
@@ -302,18 +322,18 @@
               <p class="milestone-sub">Keep planting words to grow</p>
             </div>
           </div>
+
         </div>
       </div>
     </div>
 
     <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-         SETTINGS TAB — matches Image 4 exactly
+         SETTINGS TAB
          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <div class="tab-panel hidden" data-tab="settings">
       <div class="settings-screen">
 
         <header class="settings-header">
-          <!-- Back arrow (goes to Battle tab) -->
           <button class="settings-back-btn" id="settings-back" aria-label="Back">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                  fill="none" stroke="currentColor" stroke-width="2"
@@ -325,7 +345,7 @@
           <h2 class="settings-title">SETTINGS</h2>
         </header>
 
-        <!-- ── AUDIO ───────────────────────────────────────────── -->
+        <!-- AUDIO -->
         <div class="settings-section">
           <div class="settings-section-header">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
@@ -356,7 +376,7 @@
           </div>
         </div>
 
-        <!-- ── VISUALS ──────────────────────────────────────────── -->
+        <!-- VISUALS -->
         <div class="settings-section">
           <div class="settings-section-header">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
@@ -370,14 +390,15 @@
           </div>
           <div class="settings-card">
             <div class="theme-segmented" role="group" aria-label="Visual theme">
-              <button class="theme-btn" data-visual="dark" aria-pressed="false">DARK</button>
-              <button class="theme-btn" data-visual="light" aria-pressed="false">LIGHT</button>
-              <button class="theme-btn theme-btn--active" data-visual="deep-forest" aria-pressed="true">DEEP FOREST</button>
+              <button class="theme-btn" data-visual="dark"        aria-pressed="false">DARK</button>
+              <button class="theme-btn" data-visual="light"       aria-pressed="false">LIGHT</button>
+              <button class="theme-btn theme-btn--active"
+                      data-visual="deep-forest" aria-pressed="true">DEEP FOREST</button>
             </div>
           </div>
         </div>
 
-        <!-- ── DIFFICULTY ──────────────────────────────────────── -->
+        <!-- DIFFICULTY -->
         <div class="settings-section">
           <div class="settings-section-header">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
@@ -391,14 +412,15 @@
           </div>
           <div class="settings-card">
             <div class="theme-segmented" role="group" aria-label="AI Difficulty">
-              <button class="theme-btn" data-setting-diff="easy" aria-pressed="false">EASY</button>
-              <button class="theme-btn theme-btn--active" data-setting-diff="medium" aria-pressed="true">MED</button>
-              <button class="theme-btn" data-setting-diff="hard" aria-pressed="false">HARD</button>
+              <button class="theme-btn" data-setting-diff="easy"   aria-pressed="false">EASY</button>
+              <button class="theme-btn theme-btn--active"
+                      data-setting-diff="medium" aria-pressed="true">MED</button>
+              <button class="theme-btn" data-setting-diff="hard"   aria-pressed="false">HARD</button>
             </div>
           </div>
         </div>
 
-        <!-- ── ACCOUNT ──────────────────────────────────────────── -->
+        <!-- ACCOUNT -->
         <div class="settings-section">
           <div class="settings-section-header">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
@@ -411,32 +433,86 @@
           </div>
           <div class="settings-card account-card">
             <div class="account-row">
-              <!-- Green circle avatar with leaf icon -->
               <div class="account-avatar" id="settings-avatar" aria-hidden="true">
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
                      fill="currentColor" aria-hidden="true" id="settings-avatar-icon">
                   <path d="M17 8C8 10 5.9 16.17 3.82 21a2 2 0 0 0 2.85 2.44
-                           C8.17 22.19 9 21 9 21c0 0 1 1 4 1c5 0 9-4 9-9
-                           C22 9 17 8 17 8z"/>
+                           C8.17 22.19 9 21 9 21c0 0 1 1 4 1c5 0 9-4 9-9C22 9 17 8 17 8z"/>
                 </svg>
               </div>
               <div class="account-info">
                 <p class="account-status" id="settings-profile-status">STATUS: GROWTH ACTIVE</p>
-                <p class="account-name" id="settings-profile-name">Prarambha</p>
+                <p class="account-name"   id="settings-profile-name">—</p>
               </div>
             </div>
-            <!-- Edit name button -->
-            <button class="btn-ghost account-edit-btn" id="btn-edit-name">
-              ✏ EDIT NAME
-            </button>
-            <!-- Sign Out -->
-            <button class="btn-ghost account-signout-btn" id="btn-sign-out">
-              SIGN OUT
-            </button>
+            <button class="btn-ghost account-edit-btn" id="btn-edit-name">✏ EDIT NAME</button>
+            <button class="btn-ghost account-signout-btn" id="btn-sign-out">SIGN OUT</button>
           </div>
         </div>
 
-        <!-- Footer -->
+        <!-- TUTORIAL -->
+        <div class="settings-section">
+          <div class="settings-section-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            TUTORIAL
+          </div>
+          <div class="settings-card">
+            <div class="settings-row">
+              <div>
+                <span class="settings-row-label">Tutorial</span>
+                <p style="font-size:0.8rem;color:var(--color-text-muted);margin-top:2px">
+                  Replay the intro guide
+                </p>
+              </div>
+              <button class="btn-ghost" id="btn-reset-tutorial"
+                      style="width:auto;min-width:80px;padding:8px 16px;font-size:0.8rem">
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ABOUT + LEGAL -->
+        <div class="settings-section">
+          <div class="settings-section-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            ABOUT
+          </div>
+          <div class="settings-card">
+            <div style="padding:16px;display:flex;flex-direction:column;gap:6px">
+              <p style="font-weight:700;color:var(--color-text);font-size:1rem">
+                Word Puzzle Battle
+              </p>
+              <p style="font-size:0.8rem;color:var(--color-text-muted)">
+                v1.0.4 · Vanilla JS · PWA · Firebase
+              </p>
+              <p style="font-size:0.8rem;color:var(--color-text-muted)">
+                © 2026 Prarambha Bashyal
+              </p>
+              <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+                <a href="privacy.html" class="settings-about-link">Privacy Policy ↗</a>
+                <a href="terms.html"   class="settings-about-link">Terms of Service ↗</a>
+                <a href="https://github.com/Prarambha369/Word-Puzzle-Battle"
+                   target="_blank" rel="noopener noreferrer"
+                   class="settings-about-link">View on GitHub ↗</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings page footer -->
         <div class="settings-footer">
           <p class="settings-footer-line">ROOT SYSTEM: ACTIVE</p>
           <p class="settings-footer-line">GROWTH V1.0.4</p>
@@ -452,8 +528,7 @@
        ╚══════════════════════════════════════════════════════╝ -->
   <nav id="tab-bar" class="tab-bar" role="tablist" aria-label="Main navigation">
 
-    <button class="tab-btn tab-btn--active" data-tab="battle"
-            role="tab" aria-selected="true">
+    <button class="tab-btn tab-btn--active" data-tab="battle" role="tab" aria-selected="true">
       <svg class="tab-icon" viewBox="0 0 24 24" fill="none"
            stroke="currentColor" stroke-width="2"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -504,13 +579,13 @@
       <span class="tab-label">SETTINGS</span>
     </button>
 
-  </nav><!-- /tab-bar -->
+  </nav>
 
   <!-- ╔══════════════════════════════════════════════════════╗
-       ║  OVERLAYS (position:fixed, always on top)            ║
+       ║  OVERLAYS — position:fixed, always on top            ║
        ╚══════════════════════════════════════════════════════╝ -->
 
-  <!-- Letter picker -->
+  <!-- Letter picker bottom sheet -->
   <div class="modal-overlay hidden" id="letter-modal"
        role="dialog" aria-modal="true" aria-label="Choose a letter to plant">
     <div class="bottom-sheet">
@@ -521,7 +596,7 @@
     </div>
   </div>
 
-  <!-- Win card — updated to match Image 3 -->
+  <!-- Win / game-over card -->
   <div class="modal-overlay hidden" id="win-modal"
        role="dialog" aria-modal="true" aria-label="Game over">
     <div class="win-card">
@@ -537,8 +612,8 @@
         <div class="result-card-inner">
           <div class="result-info">
             <p class="result-badge">CHAMPION</p>
-            <p class="result-name" id="winner-name">Prarambha</p>
-            <p class="result-pts" id="winner-pts">0 pts</p>
+            <p class="result-name" id="winner-name">—</p>
+            <p class="result-pts"  id="winner-pts">0 pts</p>
             <div class="result-winner-badge">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
                    fill="none" stroke="currentColor" stroke-width="2.5"
@@ -548,7 +623,7 @@
               WINNER
             </div>
           </div>
-          <div class="result-avatar" id="winner-avatar" aria-hidden="true">P</div>
+          <div class="result-avatar" id="winner-avatar" aria-hidden="true">?</div>
         </div>
       </div>
 
@@ -556,10 +631,10 @@
       <div class="player-result-card" id="loser-card">
         <div class="result-card-inner">
           <div class="result-info">
-            <p class="result-name result-name--loser" id="loser-name">Guest</p>
-            <p class="result-pts result-pts--loser" id="loser-pts">0 pts</p>
+            <p class="result-name result-name--loser" id="loser-name">—</p>
+            <p class="result-pts  result-pts--loser"  id="loser-pts">0 pts</p>
           </div>
-          <div class="result-avatar result-avatar--loser" id="loser-avatar" aria-hidden="true">G</div>
+          <div class="result-avatar result-avatar--loser" id="loser-avatar" aria-hidden="true">?</div>
         </div>
       </div>
 
@@ -592,28 +667,21 @@
     </div>
   </div>
 
-  <!-- Profile Setup Modal (first launch / after sign-out) -->
+  <!-- Profile Setup Modal (guest flow) -->
   <div class="modal-overlay hidden" id="profile-modal"
        role="dialog" aria-modal="true" aria-label="Create your profile">
     <div class="profile-setup-card">
-      <div class="profile-setup-avatar-preview" id="profile-avatar-preview"
-           aria-hidden="true">?</div>
+      <div class="profile-setup-avatar-preview" id="profile-avatar-preview" aria-hidden="true">?</div>
       <h2 class="profile-setup-title">CREATE YOUR PROFILE</h2>
       <p class="profile-setup-sub">Enter your battle name to begin growing.</p>
-      <input type="text"
-             class="profile-name-input" id="profile-name-input"
-             placeholder="Enter name (2–16 chars)"
-             maxlength="16"
-             autocomplete="off"
-             autocorrect="off"
-             autocapitalize="characters"
-             spellcheck="false"
-             aria-label="Your battle name" />
-      <p class="profile-name-error hidden" id="profile-name-error"
-         role="alert">Name must be at least 2 characters.</p>
-      <button class="btn-primary" id="profile-setup-confirm">
-        START GROWING
-      </button>
+      <input type="text" class="profile-name-input" id="profile-name-input"
+             placeholder="Enter name (2–16 chars)" maxlength="16"
+             autocomplete="off" autocorrect="off" autocapitalize="characters"
+             spellcheck="false" aria-label="Your battle name" />
+      <p class="profile-name-error hidden" id="profile-name-error" role="alert">
+        Name must be at least 2 characters.
+      </p>
+      <button class="btn-primary" id="profile-setup-confirm">START GROWING</button>
     </div>
   </div>
 
@@ -622,22 +690,19 @@
        role="dialog" aria-modal="true" aria-label="Edit your name">
     <div class="profile-setup-card">
       <h2 class="profile-setup-title">EDIT NAME</h2>
-      <input type="text"
-             class="profile-name-input" id="edit-name-input"
-             placeholder="Enter new name"
-             maxlength="16"
-             autocomplete="off"
-             autocapitalize="characters"
-             spellcheck="false"
-             aria-label="New battle name" />
-      <p class="profile-name-error hidden" id="edit-name-error"
-         role="alert">Name must be at least 2 characters.</p>
+      <input type="text" class="profile-name-input" id="edit-name-input"
+             placeholder="Enter new name" maxlength="16"
+             autocomplete="off" autocapitalize="characters"
+             spellcheck="false" aria-label="New battle name" />
+      <p class="profile-name-error hidden" id="edit-name-error" role="alert">
+        Name must be at least 2 characters.
+      </p>
       <button class="btn-primary" id="edit-name-confirm">SAVE</button>
-      <button class="btn-ghost" id="edit-name-cancel" style="margin-top:8px">Cancel</button>
+      <button class="btn-ghost"   id="edit-name-cancel" style="margin-top:8px">Cancel</button>
     </div>
   </div>
 
-  <!-- AI thinking pill -->
+  <!-- AI thinking indicator -->
   <div class="ai-thinking hidden" id="ai-thinking" aria-live="polite">
     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
          fill="none" stroke="currentColor" stroke-width="2"
@@ -650,25 +715,41 @@
 
 </div><!-- /app-shell -->
 
-<!-- Theme bootstrap — must run before first paint, no FOUC -->
+<!-- ══════════════════════════════════════════════════════════
+     SCRIPTS — ORDER IS CRITICAL
+     ══════════════════════════════════════════════════════════ -->
+
+<!-- 1. Theme bootstrap — before first paint, prevents flash -->
 <script>
   (function () {
     var stored = localStorage.getItem('wpb-visual-theme') || localStorage.getItem('wpb-theme');
     var dark   = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var theme  = stored || (dark ? 'dark' : 'dark');
-    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-theme', stored || (dark ? 'dark' : 'dark'));
   })();
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./service-worker.js')
-      .catch(function (e) { console.warn('[WPB] SW:', e); });
+      .catch(function(e){ console.warn('[WPB] SW:', e); });
   }
 </script>
 
+<!-- 2. Firebase SDK — 3 scripts from Google's CDN, no npm needed -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+<!-- 3. Your Firebase config (safe to commit — apiKey is public by design) -->
+<script src="config.js"></script>
+
+<!-- 4. Game scripts — load order matters -->
 <script src="trie.js"></script>
 <script src="profile.js"></script>
 <script src="game.js"></script>
 <script src="ai-bot.js"></script>
 <script src="tutorial.js"></script>
+
+<!-- 5. Firebase multiplayer + Google auth — load after game.js -->
+<script src="firebase-multiplayer.js"></script>
+<script src="auth.js"></script>
 
 </body>
 </html>

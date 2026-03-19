@@ -1,7 +1,7 @@
 /**
  * Word Puzzle Battle
  * Copyright (c) 2026 Prarambha Bashyal. All rights reserved.
- * Source: https://github.com/Prarambha369/word-puzzle-battle
+ * Source: https://github.com/Prarambha369/Word-Puzzle-Battle
  * License: Word Puzzle Battle Source-Available License v1.0
  */
 'use strict';
@@ -9,16 +9,16 @@
 /* ==========================================================
    STATE
    ========================================================== */
-let board        = [];
-let currentTurn  = 'p1';
-let scores       = { p1: 0, p2: 0 };
-let trie         = null;
-let gameOver     = false;
-let pendingCell  = null;
-let scoredPaths  = new Set();
-let gameMode     = 'vs-ai';
-let aiDifficulty = 'medium';
-let lastWord     = '';
+let board              = [];
+let currentTurn        = 'p1';
+let scores             = { p1: 0, p2: 0 };
+let trie               = null;
+let gameOver           = false;
+let pendingCell        = null;
+let scoredPaths        = new Set();
+let gameMode           = 'vs-ai';
+let aiDifficulty       = 'medium';
+let lastWord           = '';
 let wordsFoundThisGame = 0;
 
 const WIN_SCORE = 20;
@@ -26,16 +26,12 @@ const WIN_SCORE = 20;
 /* ==========================================================
    SETTINGS — persisted in localStorage
    ========================================================== */
-
 const SETTINGS_KEY = 'wpb-settings';
 
 function loadSettings() {
-  try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch (e) { return {}; }
+  try { const r = localStorage.getItem(SETTINGS_KEY); return r ? JSON.parse(r) : {}; }
+  catch (e) { return {}; }
 }
-
 function saveSettings(patch) {
   const s = Object.assign(loadSettings(), patch);
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch (e) {}
@@ -45,22 +41,12 @@ function saveSettings(patch) {
 /* ==========================================================
    THEME — DARK / LIGHT / DEEP FOREST
    ========================================================== */
-
-/**
- * Applies a visual theme to <html data-theme="...">.
- * @param {'dark'|'light'|'deep-forest'} theme
- */
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('wpb-visual-theme', theme);
   saveSettings({ visualTheme: theme });
-  _syncThemeButtons(theme);
-}
-
-/** Syncs both settings tab segmented control buttons. */
-function _syncThemeButtons(active) {
   document.querySelectorAll('.theme-btn[data-visual]').forEach(btn => {
-    const on = btn.dataset.visual === active;
+    const on = btn.dataset.visual === theme;
     btn.classList.toggle('theme-btn--active', on);
     btn.setAttribute('aria-pressed', String(on));
   });
@@ -69,44 +55,39 @@ function _syncThemeButtons(active) {
 /* ==========================================================
    TAB BAR
    ========================================================== */
-
-/**
- * Switches the active tab. Blocked during live gameplay.
- * @param {string} targetTab
- */
 function switchToTab(targetTab) {
   const gameScreen = document.getElementById('game-screen');
   if (gameScreen && !gameScreen.classList.contains('hidden')) return;
-
   document.querySelectorAll('.tab-btn').forEach(btn => {
     const on = btn.dataset.tab === targetTab;
     btn.classList.toggle('tab-btn--active', on);
     btn.setAttribute('aria-selected', String(on));
   });
-
   document.querySelectorAll('.tab-panel').forEach(panel => {
     panel.classList.toggle('hidden', panel.dataset.tab !== targetTab);
   });
-
-  // Refresh Garden stats whenever that tab is opened
-  if (targetTab === 'garden') refreshGardenUI();
+  if (targetTab === 'garden') refreshAllProfileUI();
 }
 
 function initTabBar() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => switchToTab(btn.dataset.tab));
+    btn.addEventListener('click', () => {
+      switchToTab(btn.dataset.tab);
+      // Lazy-render lobby on first tap
+      if (btn.dataset.tab === 'lobby') {
+        const panel = document.querySelector('[data-tab="lobby"]');
+        if (panel && !panel.dataset.fbReady && typeof renderFBLobbyScreen === 'function') {
+          renderFBLobbyScreen();
+          panel.dataset.fbReady = 'true';
+        }
+      }
+    });
   });
 }
 
 /* ==========================================================
    SCREENS
    ========================================================== */
-
-/**
- * Switches between home and game screen.
- * Tab bar slides away during gameplay.
- * @param {'home'|'game'} screen
- */
 function showScreen(screen) {
   document.getElementById('home-screen').classList.toggle('hidden', screen !== 'home');
   document.getElementById('game-screen').classList.toggle('hidden', screen !== 'game');
@@ -115,81 +96,78 @@ function showScreen(screen) {
 }
 
 /* ==========================================================
-   PROFILE UI HELPERS
+   PROFILE UI
    ========================================================== */
+function refreshAllProfileUI() {
+  // Prefer auth.js (Google) → fall back to profile.js (local/guest)
+  const auth = window.auth;
+  const prof = (auth?.isSignedIn) ? auth : window.profile;
 
-/**
- * Syncs the settings account card, Garden tab, and HUD player label
- * with the current profile. Safe to call at any time.
- */
-function refreshProfileUI() {
-  const prof = window.profile;
-
-  // Settings account card
   const nameEl   = document.getElementById('settings-profile-name');
   const statusEl = document.getElementById('settings-profile-status');
-  if (nameEl)   nameEl.textContent   = prof.exists() ? prof.name : '—';
-  if (statusEl) statusEl.textContent = prof.exists() ? 'STATUS: GROWTH ACTIVE' : 'NOT SIGNED IN';
+  const avatarEl = document.getElementById('settings-avatar');
 
-  // Avatar in settings — show initial as text inside the circle
-  const avatarEl   = document.getElementById('settings-avatar');
-  const avatarIcon = document.getElementById('settings-avatar-icon');
-  if (avatarEl && prof.exists()) {
-    // Replace SVG leaf with the player's initial
-    if (avatarIcon) avatarIcon.remove();
-    avatarEl.textContent = prof.initial;
-    avatarEl.classList.add('account-avatar--initial');
-  } else if (avatarEl) {
-    avatarEl.textContent = '?';
+  if (nameEl)   nameEl.textContent   = prof?.name    || '—';
+  if (statusEl) statusEl.textContent = auth?.isSignedIn
+    ? 'STATUS: GROWTH ACTIVE'
+    : (window.profile?.exists() ? 'STATUS: GUEST MODE' : 'NOT SIGNED IN');
+
+  if (avatarEl) {
+    if (auth?.isSignedIn && auth.photoURL) {
+      avatarEl.innerHTML = `<img src="${auth.photoURL}" alt="${auth.name}" class="account-avatar-img" />`;
+    } else {
+      avatarEl.textContent = prof?.initial || '?';
+      avatarEl.classList.add('account-avatar--initial');
+    }
   }
 
-  // HUD player 1 label
-  const p1LabelEl = document.getElementById('p1-label');
-  if (p1LabelEl && prof.exists()) p1LabelEl.textContent = prof.name.substring(0, 8);
-
-  refreshGardenUI();
-  window.refreshProfileUI = refreshProfileUI; // keep global ref
-}
-
-/** Syncs the Garden tab stat numbers. */
-function refreshGardenUI() {
-  const prof = window.profile;
+  const p1Label = document.getElementById('p1-label');
+  if (p1Label) p1Label.textContent = (prof?.name || 'YOU').substring(0, 8);
 
   const gardenAvatar = document.getElementById('garden-avatar');
   const gardenName   = document.getElementById('garden-player-name');
-  if (gardenAvatar) gardenAvatar.textContent = prof.exists() ? prof.initial : '?';
-  if (gardenName)   gardenName.textContent   = prof.exists() ? prof.name    : '—';
+  const gardenStatus = document.getElementById('garden-status');
+  if (gardenName)   gardenName.textContent = prof?.name || '—';
+  if (gardenStatus) gardenStatus.textContent = auth?.isSignedIn ? '☁ SYNCED TO CLOUD' : '💾 LOCAL STORAGE';
+  if (gardenAvatar) {
+    if (auth?.isSignedIn && auth.photoURL) {
+      gardenAvatar.innerHTML = `<img src="${auth.photoURL}" alt="${auth.name}" class="garden-avatar-img" />`;
+    } else {
+      gardenAvatar.textContent = prof?.initial || '?';
+    }
+  }
 
   const sp = document.getElementById('stat-games-played');
   const sw = document.getElementById('stat-games-won');
   const sf = document.getElementById('stat-words-found');
   const sr = document.getElementById('stat-win-rate');
-  if (sp) sp.textContent = prof.gamesPlayed;
-  if (sw) sw.textContent = prof.gamesWon;
-  if (sf) sf.textContent = prof.wordsFound;
-  if (sr) sr.textContent = prof.winRate;
+  if (sp) sp.textContent = prof?.gamesPlayed || 0;
+  if (sw) sw.textContent = prof?.gamesWon    || 0;
+  if (sf) sf.textContent = prof?.wordsFound  || 0;
+  if (sr) sr.textContent = prof?.winRate     || '—';
+
+  const signOutBtn = document.getElementById('btn-sign-out');
+  if (signOutBtn) signOutBtn.textContent = auth?.isSignedIn ? 'SIGN OUT' : 'SIGNED IN AS GUEST';
 }
+window.refreshAllProfileUI = refreshAllProfileUI;
 
 /* ==========================================================
    SETTINGS WIRING
    ========================================================== */
-
 function initSettings() {
   const s = loadSettings();
 
-  // ── Back arrow ──────────────────────────────────────────
-  const backBtn = document.getElementById('settings-back');
-  if (backBtn) backBtn.addEventListener('click', () => switchToTab('battle'));
+  // Back arrow
+  document.getElementById('settings-back')?.addEventListener('click', () => switchToTab('battle'));
 
-  // ── Visual theme segmented ──────────────────────────────
+  // Visual theme
   const savedTheme = s.visualTheme || localStorage.getItem('wpb-visual-theme') || 'dark';
   applyTheme(savedTheme);
-
   document.querySelectorAll('.theme-btn[data-visual]').forEach(btn => {
     btn.addEventListener('click', () => applyTheme(btn.dataset.visual));
   });
 
-  // ── Settings-tab difficulty segmented ───────────────────
+  // Settings-tab difficulty
   const savedDiff = s.aiDifficulty || localStorage.getItem('wpb-difficulty') || 'medium';
   aiDifficulty = savedDiff;
   document.querySelectorAll('.theme-btn[data-setting-diff]').forEach(btn => {
@@ -198,9 +176,8 @@ function initSettings() {
     btn.setAttribute('aria-pressed', String(on));
     btn.addEventListener('click', () => {
       aiDifficulty = btn.dataset.settingDiff;
-      saveSettings({ aiDifficulty: aiDifficulty });
+      saveSettings({ aiDifficulty });
       localStorage.setItem('wpb-difficulty', aiDifficulty);
-      // Also sync home screen difficulty buttons
       document.querySelectorAll('.diff-btn').forEach(b => {
         const a = b.dataset.diff === aiDifficulty;
         b.classList.toggle('diff-btn--active', a);
@@ -214,75 +191,62 @@ function initSettings() {
     });
   });
 
-  // ── Audio toggles ───────────────────────────────────────
+  // Audio toggles
   _initAudioToggle('toggle-sfx',   'sfxEnabled',   true);
   _initAudioToggle('toggle-music', 'musicEnabled', false);
 
-  // ── Account: Sign Out ───────────────────────────────────
-  const signOutBtn = document.getElementById('btn-sign-out');
-  if (signOutBtn) {
-    signOutBtn.addEventListener('click', () => {
-      if (confirm('Sign out and reset your profile?')) {
-        window.profile.signOut();
-        refreshProfileUI();
-        // Show profile setup again
-        showProfileSetup(name => {
-          window.profile.create(name);
-          refreshProfileUI();
-        });
-      }
-    });
-  }
+  // Sign out — uses auth.js handleSignOut if available, else local profile
+  document.getElementById('btn-sign-out')?.addEventListener('click', () => {
+    if (typeof handleSignOut === 'function') {
+      handleSignOut();
+    } else if (confirm('Sign out and reset your profile?')) {
+      window.profile?.signOut();
+      refreshAllProfileUI();
+    }
+  });
 
-  // ── Account: Edit Name ──────────────────────────────────
-  const editNameBtn = document.getElementById('btn-edit-name');
-  if (editNameBtn) {
-    editNameBtn.addEventListener('click', () => {
-      const modal  = document.getElementById('edit-name-modal');
-      const input  = document.getElementById('edit-name-input');
-      if (!modal || !input) return;
-      input.value = window.profile.name || '';
-      modal.classList.remove('hidden');
-      input.focus();
-      input.select();
-    });
-  }
-
-  const editConfirm = document.getElementById('edit-name-confirm');
-  const editCancel  = document.getElementById('edit-name-cancel');
-  const editModal   = document.getElementById('edit-name-modal');
-  const editInput   = document.getElementById('edit-name-input');
-  const editError   = document.getElementById('edit-name-error');
+  // Edit name
+  document.getElementById('btn-edit-name')?.addEventListener('click', () => {
+    const modal = document.getElementById('edit-name-modal');
+    const input = document.getElementById('edit-name-input');
+    if (!modal || !input) return;
+    input.value = (window.auth?.isSignedIn ? window.auth.name : window.profile?.name) || '';
+    modal.classList.remove('hidden');
+    input.focus(); input.select();
+  });
 
   function doEditConfirm() {
-    const name = editInput ? editInput.value.trim() : '';
-    if (!name || name.length < 2) {
-      if (editError) editError.classList.remove('hidden');
-      return;
-    }
-    window.profile.create(name);
-    refreshProfileUI();
-    if (editModal) editModal.classList.add('hidden');
-    if (editError) editError.classList.add('hidden');
+    const input = document.getElementById('edit-name-input');
+    const err   = document.getElementById('edit-name-error');
+    const name  = input?.value.trim();
+    if (!name || name.length < 2) { err?.classList.remove('hidden'); return; }
+    window.profile?.create(name);
+    refreshAllProfileUI();
+    document.getElementById('edit-name-modal')?.classList.add('hidden');
+    err?.classList.add('hidden');
   }
+  document.getElementById('edit-name-confirm')?.addEventListener('click', doEditConfirm);
+  document.getElementById('edit-name-input')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doEditConfirm();
+  });
+  document.getElementById('edit-name-cancel')?.addEventListener('click', () => {
+    document.getElementById('edit-name-modal')?.classList.add('hidden');
+  });
 
-  if (editConfirm) editConfirm.addEventListener('click', doEditConfirm);
-  if (editInput)   editInput.addEventListener('keydown', e => { if (e.key === 'Enter') doEditConfirm(); });
-  if (editCancel)  editCancel.addEventListener('click', () => {
-    if (editModal) editModal.classList.add('hidden');
+  // Reset tutorial
+  document.getElementById('btn-reset-tutorial')?.addEventListener('click', () => {
+    if (window.tutorial) {
+      window.tutorial.reset();
+      switchToTab('battle');
+      window.tutorial.show();
+    }
   });
 }
 
-/**
- * Sets up one audio toggle button.
- * @param {string}  btnId
- * @param {string}  settingKey
- * @param {boolean} defaultOn
- */
 function _initAudioToggle(btnId, settingKey, defaultOn) {
   const btn = document.getElementById(btnId);
   if (!btn) return;
-  const s = loadSettings();
+  const s  = loadSettings();
   const on = settingKey in s ? s[settingKey] : defaultOn;
   _setToggle(btn, on);
   btn.addEventListener('click', () => {
@@ -291,8 +255,6 @@ function _initAudioToggle(btnId, settingKey, defaultOn) {
     saveSettings({ [settingKey]: next });
   });
 }
-
-/** @param {HTMLElement} btn @param {boolean} on */
 function _setToggle(btn, on) {
   btn.setAttribute('aria-checked', String(on));
   btn.classList.toggle('toggle-btn--on', on);
@@ -301,133 +263,98 @@ function _setToggle(btn, on) {
 /* ==========================================================
    HOME SCREEN BUTTONS
    ========================================================== */
-
 function getSelectedDifficulty() {
-  const a = document.querySelector('.diff-btn--active');
-  return a ? a.dataset.diff : aiDifficulty;
+  return document.querySelector('.diff-btn--active')?.dataset.diff || aiDifficulty;
 }
 
 function initHomeScreen() {
-
-  // ── Difficulty (home screen) ─────────────────────────────
+  // Home difficulty buttons
   document.querySelectorAll('.diff-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.diff-btn').forEach(b => {
-        b.classList.remove('diff-btn--active');
-        b.setAttribute('aria-pressed', 'false');
+        b.classList.remove('diff-btn--active'); b.setAttribute('aria-pressed', 'false');
       });
-      btn.classList.add('diff-btn--active');
-      btn.setAttribute('aria-pressed', 'true');
+      btn.classList.add('diff-btn--active'); btn.setAttribute('aria-pressed', 'true');
       aiDifficulty = btn.dataset.diff;
-      saveSettings({ aiDifficulty: btn.dataset.diff });
-      localStorage.setItem('wpb-difficulty', btn.dataset.diff);
-      // Sync settings tab difficulty too
+      saveSettings({ aiDifficulty }); localStorage.setItem('wpb-difficulty', btn.dataset.diff);
       document.querySelectorAll('.theme-btn[data-setting-diff]').forEach(b => {
         const a = b.dataset.settingDiff === aiDifficulty;
-        b.classList.toggle('theme-btn--active', a);
-        b.setAttribute('aria-pressed', String(a));
+        b.classList.toggle('theme-btn--active', a); b.setAttribute('aria-pressed', String(a));
       });
     });
   });
 
-  // Restore saved difficulty on home screen
+  // Restore saved difficulty
   const savedDiff = loadSettings().aiDifficulty || localStorage.getItem('wpb-difficulty') || 'medium';
   aiDifficulty = savedDiff;
   document.querySelectorAll('.diff-btn').forEach(b => {
     const on = b.dataset.diff === savedDiff;
-    b.classList.toggle('diff-btn--active', on);
-    b.setAttribute('aria-pressed', String(on));
+    b.classList.toggle('diff-btn--active', on); b.setAttribute('aria-pressed', String(on));
   });
 
-  // ── Play VS AI ──────────────────────────────────────────
-  const btnVsAi = document.getElementById('btn-vs-ai');
-  if (btnVsAi) {
-    btnVsAi.addEventListener('click', () => {
-      if (!trie) return;
-      gameMode     = 'vs-ai';
-      aiDifficulty = getSelectedDifficulty();
-      document.getElementById('p2-label').textContent = 'AI';
-      startGame();
-    });
-  }
+  // Play VS AI
+  document.getElementById('btn-vs-ai')?.addEventListener('click', () => {
+    if (!trie) return;
+    gameMode     = 'vs-ai';
+    aiDifficulty = getSelectedDifficulty();
+    document.getElementById('p2-label').textContent = 'AI';
+    startGame();
+  });
 
-  // ── Play VS Friend ───────────────────────────────────────
-  const btnVsFriend = document.getElementById('btn-vs-friend');
-  if (btnVsFriend) {
-    btnVsFriend.addEventListener('click', () => {
-      if (!trie) return;
-      gameMode = 'vs-human';
-      document.getElementById('p2-label').textContent = 'GUEST';
-      startGame();
-    });
-  }
+  // Play VS Friend → switches to LOBBY tab
+  document.getElementById('btn-vs-friend')?.addEventListener('click', () => {
+    switchToTab('lobby');
+    const panel = document.querySelector('[data-tab="lobby"]');
+    if (panel && !panel.dataset.fbReady && typeof renderFBLobbyScreen === 'function') {
+      renderFBLobbyScreen();
+      panel.dataset.fbReady = 'true';
+    }
+  });
 
-  // ── Settings gear icon ──────────────────────────────────
-  const settingsBtn = document.getElementById('btn-settings');
-  if (settingsBtn) settingsBtn.addEventListener('click', () => switchToTab('settings'));
+  // Settings gear icon → settings tab
+  document.getElementById('btn-settings')?.addEventListener('click', () => switchToTab('settings'));
 
-  // ── How to play ─────────────────────────────────────────
-  const howBtn = document.getElementById('btn-how-to-play');
-  if (howBtn) {
-    howBtn.addEventListener('click', () => {
-      if (window.tutorial) { window.tutorial.reset(); window.tutorial.show(); }
-    });
-  }
+  // How to play
+  document.getElementById('btn-how-to-play')?.addEventListener('click', () => {
+    if (window.tutorial) { window.tutorial.reset(); window.tutorial.show(); }
+  });
 
-  // ── In-game home button ─────────────────────────────────
-  const btnHome = document.getElementById('btn-home');
-  if (btnHome) {
-    btnHome.addEventListener('click', () => {
-      if (gameOver || confirm('Leave this game and return to menu?')) goHome();
-    });
-  }
+  // In-game home button
+  document.getElementById('btn-home')?.addEventListener('click', () => {
+    if (gameOver || confirm('Leave this game and return to menu?')) goHome();
+  });
 
-  // ── Letter picker cancel ────────────────────────────────
-  const cancelBtn = document.getElementById('modal-cancel');
-  if (cancelBtn) {
-    cancelBtn.addEventListener('click', () => {
-      document.getElementById('letter-modal').classList.add('hidden');
-      pendingCell = null;
-    });
-  }
+  // Letter picker cancel
+  document.getElementById('modal-cancel')?.addEventListener('click', () => {
+    document.getElementById('letter-modal').classList.add('hidden');
+    pendingCell = null;
+  });
 
-  // ── Win modal buttons ───────────────────────────────────
-  const playAgainBtn = document.getElementById('play-again');
-  if (playAgainBtn) {
-    playAgainBtn.addEventListener('click', () => {
-      document.getElementById('win-modal').classList.add('hidden');
-      startGame();
-    });
-  }
-
-  const winHomeBtn = document.getElementById('win-home');
-  if (winHomeBtn) winHomeBtn.addEventListener('click', goHome);
-
-  const winCloseBtn = document.getElementById('win-close');
-  if (winCloseBtn) winCloseBtn.addEventListener('click', goHome);
-
-  const viewStatsBtn = document.getElementById('btn-view-stats');
-  if (viewStatsBtn) {
-    viewStatsBtn.addEventListener('click', () => {
-      document.getElementById('win-modal').classList.add('hidden');
-      switchToTab('garden');
-      showScreen('home');
-    });
-  }
+  // Win modal buttons
+  document.getElementById('play-again')?.addEventListener('click', () => {
+    document.getElementById('win-modal').classList.add('hidden');
+    startGame();
+  });
+  document.getElementById('win-home')?.addEventListener('click', goHome);
+  document.getElementById('win-close')?.addEventListener('click', goHome);
+  document.getElementById('btn-view-stats')?.addEventListener('click', () => {
+    document.getElementById('win-modal').classList.add('hidden');
+    switchToTab('garden');
+    showScreen('home');
+  });
 }
 
 /* ==========================================================
    GAME LIFECYCLE
    ========================================================== */
-
 function startGame() {
-  scores               = { p1: 0, p2: 0 };
-  currentTurn          = 'p1';
-  gameOver             = false;
-  pendingCell          = null;
-  scoredPaths          = new Set();
-  lastWord             = '';
-  wordsFoundThisGame   = 0;
+  scores             = { p1: 0, p2: 0 };
+  currentTurn        = 'p1';
+  gameOver           = false;
+  pendingCell        = null;
+  scoredPaths        = new Set();
+  lastWord           = '';
+  wordsFoundThisGame = 0;
   showScreen('game');
   renderBoard();
   updateHUD();
@@ -444,28 +371,23 @@ function goHome() {
 /* ==========================================================
    BOARD
    ========================================================== */
-
 function renderBoard() {
   board = [];
   for (let r = 0; r < 10; r++) {
     board[r] = [];
-    for (let c = 0; c < 10; c++)
-      board[r][c] = { letter: null, owner: null, row: r, col: c };
+    for (let c = 0; c < 10; c++) board[r][c] = { letter: null, owner: null, row: r, col: c };
   }
   const grid = document.getElementById('board');
   const frag = document.createDocumentFragment();
-  for (let r = 0; r < 10; r++)
-    for (let c = 0; c < 10; c++) frag.appendChild(createTileEl(r, c));
+  for (let r = 0; r < 10; r++) for (let c = 0; c < 10; c++) frag.appendChild(createTileEl(r, c));
   grid.innerHTML = '';
   grid.appendChild(frag);
 }
 
-/** @returns {HTMLElement} */
 function createTileEl(r, c) {
   const el = document.createElement('div');
   el.className = 'tile';
-  el.dataset.r = r;
-  el.dataset.c = c;
+  el.dataset.r = r; el.dataset.c = c;
   el.setAttribute('role', 'gridcell');
   el.setAttribute('tabindex', '0');
   el.setAttribute('aria-label', `Row ${r + 1}, Column ${c + 1}, empty`);
@@ -479,7 +401,6 @@ function createTileEl(r, c) {
 /* ==========================================================
    TILE INTERACTION
    ========================================================== */
-
 function onTileClick() {
   if (gameOver) return;
   if (gameMode === 'vs-ai' && currentTurn === 'p2') return;
@@ -510,6 +431,14 @@ function showLetterModal() {
 function onLetterChosen(letter) {
   document.getElementById('letter-modal').classList.add('hidden');
   if (!pendingCell) return;
+
+  // Firebase multiplayer — send to server instead of placing locally
+  if (gameMode === 'vs-firebase' && typeof fbOnTileChosen === 'function') {
+    fbOnTileChosen(pendingCell.r, pendingCell.c, letter);
+    pendingCell = null;
+    return;
+  }
+
   placeLetterOnBoard(pendingCell.r, pendingCell.c, letter, currentTurn);
   pendingCell = null;
 }
@@ -517,7 +446,6 @@ function onLetterChosen(letter) {
 /* ==========================================================
    CORE LOGIC
    ========================================================== */
-
 function placeLetterOnBoard(r, c, letter, owner) {
   board[r][c].letter = letter;
   board[r][c].owner  = owner;
@@ -537,8 +465,8 @@ function placeLetterOnBoard(r, c, letter, owner) {
         wordsFoundThisGame++;
         for (const [rr, cc] of cells) cellsToFlash.add(`${rr},${cc}`);
       }
-      const scoreOwner = (owner === 'ai') ? 'p2' : owner;
-      scores[scoreOwner] += pts;
+      const so = (owner === 'ai') ? 'p2' : owner;
+      scores[so] += pts;
       updateHUD();
       flashCells(cellsToFlash);
       if (checkWin()) return;
@@ -570,49 +498,44 @@ function flashCells(cellKeys) {
     }));
   }
 }
+// Expose globally so firebase-multiplayer.js can call it
+window.flashCells = flashCells;
 
 /* ==========================================================
    WORD DETECTION
    ========================================================== */
-
 function detectWords(board, placedRow, placedCol, trie) {
   const DIRS = [[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]];
-  const found = [];
-  const seen  = new Set();
-
+  const found = [], seen = new Set();
   for (const [dr, dc] of DIRS) {
     let sr = placedRow, sc = placedCol;
-    while (inBounds(sr - dr, sc - dc) && board[sr - dr][sc - dc].letter) { sr -= dr; sc -= dc; }
+    while (inBounds(sr-dr, sc-dc) && board[sr-dr][sc-dc].letter) { sr -= dr; sc -= dc; }
     const line = [], coords = [];
     let r = sr, c = sc;
-    while (inBounds(r, c) && board[r][c].letter) {
-      line.push(board[r][c].letter); coords.push([r, c]); r += dr; c += dc;
-    }
+    while (inBounds(r, c) && board[r][c].letter) { line.push(board[r][c].letter); coords.push([r,c]); r+=dr; c+=dc; }
     if (line.length < 3) continue;
-    const pi = coords.findIndex(([rr, cc]) => rr === placedRow && cc === placedCol);
+    const pi = coords.findIndex(([rr,cc]) => rr===placedRow && cc===placedCol);
     if (pi === -1) continue;
-    for (let s = 0; s <= pi; s++) {
-      for (let e = pi + 1; e <= line.length; e++) {
-        if (e - s < 3) continue;
-        const word  = line.slice(s, e).join('');
-        const cells = coords.slice(s, e);
-        const key   = cells.map(([rr, cc]) => `${rr},${cc}`).join('|');
-        if (seen.has(key)) continue;
-        seen.add(key);
-        if (trie.search(word)) found.push({ word, cells });
-      }
+    for (let s = 0; s <= pi; s++) for (let e = pi+1; e <= line.length; e++) {
+      if (e-s < 3) continue;
+      const word = line.slice(s,e).join(''), cells = coords.slice(s,e);
+      const key  = cells.map(([rr,cc]) => `${rr},${cc}`).join('|');
+      if (seen.has(key)) continue; seen.add(key);
+      if (trie.search(word)) found.push({ word, cells });
     }
   }
   return found;
 }
+// Expose globally so firebase-multiplayer.js can call it
+window.detectWords = detectWords;
 
 function inBounds(r, c) { return r >= 0 && r < 10 && c >= 0 && c < 10; }
 function scoreWord(word) { return word.length >= 5 ? 3 : word.length === 4 ? 2 : 1; }
+window.scoreWord = scoreWord;
 
 /* ==========================================================
    TURN & WIN
    ========================================================== */
-
 function switchTurn() {
   currentTurn = currentTurn === 'p1' ? 'p2' : 'p1';
   updateHUD();
@@ -634,58 +557,55 @@ function triggerAI() {
 
 function checkWin() {
   if (scores.p1 >= WIN_SCORE || scores.p2 >= WIN_SCORE) {
-    const p1Won = scores.p1 >= scores.p2;
-    showWin(p1Won);
+    showWin(scores.p1 >= scores.p2);
     return true;
   }
   let filled = 0;
   for (let r = 0; r < 10; r++) for (let c = 0; c < 10; c++) if (board[r][c].letter) filled++;
-  if (filled === 100) {
-    showWin(scores.p1 >= scores.p2);
-    return true;
-  }
+  if (filled === 100) { showWin(scores.p1 >= scores.p2); return true; }
   return false;
 }
 
-/**
- * Shows the victory modal with champion / loser cards matching Image 3.
- * @param {boolean} p1Won
- */
 function showWin(p1Won) {
   gameOver = true;
 
-  const prof = window.profile;
-  const playerName = prof.exists() ? prof.name : 'YOU';
+  const auth = window.auth;
+  const prof = auth?.isSignedIn ? auth : window.profile;
+  const myName = prof?.name || 'YOU';
   const p2Name = gameMode === 'vs-ai' ? 'AI' : 'GUEST';
 
-  const winnerName = p1Won ? playerName : p2Name;
-  const loserName  = p1Won ? p2Name     : playerName;
-  const winnerPts  = p1Won ? scores.p1  : scores.p2;
-  const loserPts   = p1Won ? scores.p2  : scores.p1;
+  const winnerName = p1Won ? myName  : p2Name;
+  const loserName  = p1Won ? p2Name  : myName;
+  const winnerPts  = p1Won ? scores.p1 : scores.p2;
+  const loserPts   = p1Won ? scores.p2 : scores.p1;
 
   document.getElementById('win-pill').textContent    = p1Won ? 'YOU WIN' : 'YOU LOSE';
-  document.getElementById('win-pill').className      = `win-pill ${p1Won ? '' : 'win-pill--lose'}`;
+  document.getElementById('win-pill').className      = `win-pill${p1Won ? '' : ' win-pill--lose'}`;
   document.getElementById('winner-name').textContent = winnerName;
   document.getElementById('winner-pts').textContent  = `${winnerPts} pts`;
   document.getElementById('loser-name').textContent  = loserName;
   document.getElementById('loser-pts').textContent   = `${loserPts} pts`;
+  document.getElementById('winner-avatar').textContent = winnerName[0].toUpperCase();
+  document.getElementById('loser-avatar').textContent  = loserName[0].toUpperCase();
 
-  // Avatars — initial letter
-  const winnerInitial = winnerName[0].toUpperCase();
-  const loserInitial  = loserName[0].toUpperCase();
-  document.getElementById('winner-avatar').textContent = winnerInitial;
-  document.getElementById('loser-avatar').textContent  = loserInitial;
+  // Show Google photo in winner avatar if available
+  if (p1Won && auth?.isSignedIn && auth.photoURL) {
+    document.getElementById('winner-avatar').innerHTML =
+      `<img src="${auth.photoURL}" alt="${myName}" class="account-avatar-img" />`;
+  }
 
-  // Last word card
   const lastWordEl = document.getElementById('win-last-word');
   const bonusEl    = document.getElementById('win-bonus');
   if (lastWordEl) lastWordEl.textContent = lastWord || '—';
-  if (bonusEl)    bonusEl.textContent    = lastWord && scoreWord(lastWord) >= 3 ? '+3 bonus points applied' : '';
+  if (bonusEl)    bonusEl.textContent    = (lastWord && scoreWord(lastWord) >= 3) ? '+3 bonus points applied' : '';
 
-  // Record game in profile
-  if (prof.exists()) {
-    prof.recordGame({ won: p1Won, wordsFound: wordsFoundThisGame, points: scores.p1 });
-    refreshGardenUI();
+  // ── Record game result ─────────────────────────────────────
+  // Uses auth.js (cloud) if signed in, otherwise profile.js (local)
+  if (typeof recordGameResult === 'function') {
+    recordGameResult({ won: p1Won, wordsFound: wordsFoundThisGame, points: scores.p1 });
+  } else if (prof?.exists?.()) {
+    prof.recordGame?.({ won: p1Won, wordsFound: wordsFoundThisGame, points: scores.p1 });
+    refreshAllProfileUI();
   }
 
   document.getElementById('win-modal').classList.remove('hidden');
@@ -694,7 +614,6 @@ function showWin(p1Won) {
 /* ==========================================================
    HUD
    ========================================================== */
-
 function updateHUD() {
   document.getElementById('p1-score').textContent = scores.p1;
   document.getElementById('p2-score').textContent = scores.p2;
@@ -704,15 +623,13 @@ function updateHUD() {
   document.getElementById('p1-progress').style.width = `${p1Pct}%`;
   document.getElementById('p2-progress').style.width = `${p2Pct}%`;
 
-  const p1Bar = document.querySelector('#p1-card .progress-bar');
-  const p2Bar = document.querySelector('#p2-card .progress-bar');
-  if (p1Bar) p1Bar.setAttribute('aria-valuenow', scores.p1);
-  if (p2Bar) p2Bar.setAttribute('aria-valuenow', scores.p2);
+  document.querySelector('#p1-card .progress-bar')?.setAttribute('aria-valuenow', scores.p1);
+  document.querySelector('#p2-card .progress-bar')?.setAttribute('aria-valuenow', scores.p2);
 
   const badge = document.getElementById('turn-badge');
-  if (gameOver)                    badge.textContent = 'GAME OVER';
-  else if (gameMode === 'vs-ai')   badge.textContent = currentTurn === 'p1' ? 'YOUR TURN' : 'AI TURN';
-  else                             badge.textContent = currentTurn === 'p1' ? 'P1 TURN'   : 'P2 TURN';
+  if (gameOver)                   badge.textContent = 'GAME OVER';
+  else if (gameMode === 'vs-ai')  badge.textContent = currentTurn === 'p1' ? 'YOUR TURN' : 'AI TURN';
+  else                            badge.textContent = currentTurn === 'p1' ? 'P1 TURN'   : 'P2 TURN';
 }
 
 function showAIThinking(show) {
@@ -722,14 +639,12 @@ function showAIThinking(show) {
 /* ==========================================================
    BOOT
    ========================================================== */
-
 initTabBar();
 initSettings();
 initHomeScreen();
 showScreen('home');
 
-// expose refreshProfileUI globally for profile.js
-window.refreshProfileUI = refreshProfileUI;
+window.refreshAllProfileUI = refreshAllProfileUI;
 
 buildTrieAsync(t => {
   trie = t;
@@ -737,24 +652,30 @@ buildTrieAsync(t => {
   document.getElementById('loading-state').classList.add('hidden');
   document.getElementById('menu-body').classList.remove('hidden');
 
-  // Profile gate — show name prompt on first visit
-  const prof = window.profile;
-  if (!prof.exists()) {
-    setTimeout(() => {
-      showProfileSetup(name => {
-        prof.create(name);
-        refreshProfileUI();
-        // After profile, show tutorial
-        if (window.tutorial && window.tutorial.shouldShowTutorial()) window.tutorial.show();
-      });
-    }, 300);
+  // Profile gate — auth.js handles this if signed in with Google.
+  // For guests, fall back to local profile.js.
+  if (!window.auth?.isSignedIn) {
+    if (window.profile && !window.profile.exists()) {
+      // Guest first launch — auth.js will show its own screen,
+      // so only show profile modal if auth.js is not loaded
+      if (typeof window.auth === 'undefined') {
+        setTimeout(() => {
+          if (typeof showProfileSetup === 'function') {
+            showProfileSetup(name => {
+              window.profile.create(name);
+              refreshAllProfileUI();
+              if (window.tutorial?.shouldShowTutorial()) window.tutorial.show();
+            });
+          }
+        }, 300);
+      }
+    } else {
+      refreshAllProfileUI();
+      setTimeout(() => {
+        if (window.tutorial?.shouldShowTutorial()) window.tutorial.show();
+      }, 100);
+    }
   } else {
-    refreshProfileUI();
-    // Sync HUD label immediately
-    const p1LabelEl = document.getElementById('p1-label');
-    if (p1LabelEl) p1LabelEl.textContent = prof.name.substring(0, 8);
-    setTimeout(() => {
-      if (window.tutorial && window.tutorial.shouldShowTutorial()) window.tutorial.show();
-    }, 100);
+    refreshAllProfileUI();
   }
 });
