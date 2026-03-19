@@ -1,0 +1,742 @@
+/**
+ * Word Puzzle Battle
+ * Copyright (c) 2026 Prarambha Bashyal. All rights reserved.
+ *
+ * Source: https://github.com/Prarambha369/word-puzzle-battle
+ * License: Word Puzzle Battle Source-Available License v1.0
+ */
+
+/* ============================================================================
+   TUTORIAL MODAL — BASE STYLES
+   ========================================================================= */
+
+#tutorial-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  animation: tutorial-fade-in 300ms ease;
+}
+
+@keyframes tutorial-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* PHASE 1: DARK THEME */
+#tutorial-modal.tutorial-phase-1 {
+  background: rgba(0, 70, 67, 0.95);
+  backdrop-filter: blur(8px);
+}
+
+#tutorial-modal.tutorial-phase-1 .tutorial-content {
+  background: #004643;
+  color: #f0ede5;
+}
+
+/* PHASES 2-4: LIGHT THEME */
+#tutorial-modal.tutorial-phase-2,
+#tutorial-modal.tutorial-phase-3,
+#tutorial-modal.tutorial-phase-4 {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+#tutorial-modal.tutorial-phase-2 .tutorial-content,
+#tutorial-modal.tutorial-phase-3 .tutorial-content,
+#tutorial-modal.tutorial-phase-4 .tutorial-content {
+  background: #f5f5f7;
+  color: #111118;
+}
+
+/* ============================================================================
+   TUTORIAL CONTENT CONTAINER
+   ========================================================================= */
+
+.tutorial-content {
+  position: relative;
+  width: min(90vw, 500px);
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: tutorial-slide-up 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes tutorial-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================================
+   CLOSE BUTTON
+   ========================================================================= */
+
+.tutorial-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 28px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 120ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tutorial-close:hover {
+  opacity: 1;
+}
+
+.tutorial-close:focus-visible {
+  outline: 2px solid;
+  outline-offset: 2px;
+}
+
+/* ============================================================================
+   PROGRESS SECTION
+   ========================================================================= */
+
+.tutorial-progress-section {
+  margin-bottom: 24px;
+}
+
+.tutorial-progress-label {
+  font-size: clamp(10px, 2vw, 11px);
+  font-family: 'Space Mono', monospace;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+  opacity: 0.8;
+}
+
+#tutorial-modal.tutorial-phase-1 .tutorial-progress-label {
+  color: #5a9e6f;
+}
+
+#tutorial-modal.tutorial-phase-2 .tutorial-progress-label,
+#tutorial-modal.tutorial-phase-3 .tutorial-progress-label,
+#tutorial-modal.tutorial-phase-4 .tutorial-progress-label {
+  color: #e8a838;
+}
+
+.tutorial-progress-bar {
+  height: 4px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.tutorial-progress-fill {
+  height: 100%;
+  background: inherit;
+  transition: width 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#tutorial-modal.tutorial-phase-1 .tutorial-progress-fill {
+  background: #5a9e6f;
+}
+
+#tutorial-modal.tutorial-phase-2 .tutorial-progress-fill,
+#tutorial-modal.tutorial-phase-3 .tutorial-progress-fill,
+#tutorial-modal.tutorial-phase-4 .tutorial-progress-fill {
+  background: #e8a838;
+}
+
+/* ============================================================================
+   TITLE
+   ========================================================================= */
+
+.tutorial-title {
+  font-size: clamp(28px, 6vw, 40px);
+  font-family: 'Space Mono', monospace;
+  font-weight: bold;
+  margin: 24px 0 16px;
+  line-height: 1.2;
+}
+
+/* ============================================================================
+   DESCRIPTION
+   ========================================================================= */
+
+.tutorial-description {
+  font-size: clamp(14px, 3.5vw, 18px);
+  line-height: 1.6;
+  margin: 16px 0 24px;
+  max-width: 320px;
+  color: inherit;
+}
+
+#tutorial-modal.tutorial-phase-1 .tutorial-description {
+  color: #b8b5ae;
+}
+
+#tutorial-modal.tutorial-phase-2 .tutorial-description,
+#tutorial-modal.tutorial-phase-3 .tutorial-description,
+#tutorial-modal.tutorial-phase-4 .tutorial-description {
+  color: #6b7280;
+}
+
+.tutorial-accent {
+  font-weight: 600;
+}
+
+#tutorial-modal.tutorial-phase-1 .tutorial-accent {
+  color: #5a9e6f;
+}
+
+#tutorial-modal.tutorial-phase-2 .tutorial-accent,
+#tutorial-modal.tutorial-phase-3 .tutorial-accent,
+#tutorial-modal.tutorial-phase-4 .tutorial-accent {
+  color: #e8a838;
+}
+
+/* ============================================================================
+   VISUAL CONTAINER
+   ========================================================================= */
+
+.tutorial-visual-container {
+  width: 100%;
+  margin: 24px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ============================================================================
+   PHASE 1: 10x10 GRID
+   ========================================================================= */
+
+.tutorial-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+  padding: 16px;
+  background: transparent;
+  border-radius: 8px;
+  max-width: 320px;
+  aspect-ratio: 1;
+}
+
+.tutorial-tile {
+  width: 32px;
+  height: 32px;
+  background: #1a3533;
+  border: 1px solid #243328;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 120ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0;
+}
+
+#tutorial-modal.tutorial-phase-2 .tutorial-tile,
+#tutorial-modal.tutorial-phase-3 .tutorial-tile,
+#tutorial-modal.tutorial-phase-4 .tutorial-tile {
+  background: transparent;
+  border: none;
+}
+
+.tutorial-tile:hover {
+  border-color: #5a9e6f;
+  transform: scale(1.06);
+}
+
+#tutorial-modal.tutorial-phase-2 .tutorial-tile:hover,
+#tutorial-modal.tutorial-phase-3 .tutorial-tile:hover,
+#tutorial-modal.tutorial-phase-4 .tutorial-tile:hover {
+  transform: none;
+}
+
+.tutorial-tile-highlight {
+  border: 2px #5a9e6f !important;
+  box-shadow: 0 0 12px #5a9e6f66, inset 0 0 8px #5a9e6f33 !important;
+  animation: tutorial-glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes tutorial-glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 12px #5a9e6f66, inset 0 0 8px #5a9e6f33;
+  }
+  50% {
+    box-shadow: 0 0 20px #5a9e6f99, inset 0 0 12px #5a9e6f55;
+  }
+}
+
+.tutorial-cursor-icon {
+  font-size: 16px;
+  display: block;
+  animation: tutorial-bounce 1.5s ease-in-out infinite;
+}
+
+@keyframes tutorial-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* ============================================================================
+   PHASE 2: SMALL GRID (4x4)
+   ========================================================================= */
+
+.tutorial-grid-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.tutorial-grid-sm {
+  grid-template-columns: repeat(4, 1fr);
+  max-width: 240px;
+  gap: 4px;
+  padding: 16px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.tutorial-tile-md {
+  width: 56px;
+  height: 56px;
+  background: #f5f5f7;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-family: 'Space Mono', monospace;
+  font-size: 16px;
+  font-weight: bold;
+  color: #111118;
+  transition: all 120ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tutorial-tile-highlighted {
+  background: #fff4e0 !important;
+  border: 2px #e8a838 !important;
+  color: #111118 !important;
+}
+
+.tutorial-tile-unplayed {
+  color: #9ca3af;
+}
+
+.tutorial-badge {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tutorial-badge-success {
+  background: #fff4e0;
+  color: #ea580c;
+}
+
+/* ============================================================================
+   PHASE 3: WORD DISPLAY
+   ========================================================================= */
+
+.tutorial-word-display {
+  position: relative;
+  background: #dbeafe;
+  border-radius: 16px;
+  padding: 32px 20px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  min-height: 140px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.tutorial-word-tile {
+  width: 56px;
+  height: 56px;
+  background: #7ecba1;
+  border: 1px solid #5eab85;
+  border-radius: 6px;
+  font-family: 'Space Mono', monospace;
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: tutorial-score-flash 600ms ease forwards;
+}
+
+@keyframes tutorial-score-flash {
+  0% {
+    background-color: #7ecba1;
+    transform: scale(1.15);
+  }
+  100% {
+    background-color: transparent;
+    transform: scale(1);
+  }
+}
+
+.tutorial-points-badge {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #e8a838;
+  color: #111118;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-family: 'Space Mono', monospace;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.tutorial-scoring-info {
+  background: transparent;
+  padding: 0;
+  margin-bottom: 16px;
+}
+
+.tutorial-scoring-row {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+/* ============================================================================
+   PHASE 3: SUCCESS CALLOUT
+   ========================================================================= */
+
+.tutorial-callout {
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.tutorial-callout-success {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  color: #16a34a;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tutorial-checkmark {
+  font-size: 18px;
+  color: #22c55e;
+}
+
+/* ============================================================================
+   PHASE 4: VICTORY CARD
+   ========================================================================= */
+
+.tutorial-victory-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.tutorial-victory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.tutorial-victory-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: #e8a838;
+  font-weight: 600;
+}
+
+.tutorial-victory-badge {
+  font-size: 20px;
+}
+
+.tutorial-victory-content {
+  margin-bottom: 12px;
+}
+
+.tutorial-victory-title {
+  font-size: 22px;
+  font-weight: bold;
+  color: #111118;
+  margin-bottom: 4px;
+}
+
+.tutorial-victory-status {
+  font-size: 14px;
+  color: #e8a838;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.tutorial-victory-score {
+  font-size: 36px;
+  font-weight: bold;
+  color: #e8a838;
+  line-height: 1;
+}
+
+.tutorial-progress-bar-card {
+  margin-bottom: 12px;
+  height: 4px;
+}
+
+.tutorial-victory-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.tutorial-victory-bullet {
+  color: #e8a838;
+  font-size: 16px;
+  margin-right: 4px;
+}
+
+.tutorial-player-pill {
+  background: #e8a838;
+  color: #111118;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tutorial-player-avatar {
+  font-size: 14px;
+}
+
+/* ============================================================================
+   BUTTONS
+   ========================================================================= */
+
+.tutorial-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.tutorial-btn {
+  padding: 16px 24px;
+  border-radius: 12px;
+  border: none;
+  font-size: clamp(14px, 3vw, 16px);
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 120ms ease;
+  font-family: 'Space Mono', monospace;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tutorial-btn:focus-visible {
+  outline: 2px solid;
+  outline-offset: 2px;
+}
+
+/* Primary button */
+.tutorial-btn-primary {
+  width: 100%;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+#tutorial-modal.tutorial-phase-1 .tutorial-btn-primary {
+  background: #5a9e6f;
+  color: #f0ede5;
+}
+
+#tutorial-modal.tutorial-phase-2 .tutorial-btn-primary,
+#tutorial-modal.tutorial-phase-3 .tutorial-btn-primary,
+#tutorial-modal.tutorial-phase-4 .tutorial-btn-primary {
+  background: #e8a838;
+  color: #111118;
+}
+
+.tutorial-btn-primary:hover {
+  transform: scale(1.06);
+}
+
+.tutorial-btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* Skip button */
+.tutorial-btn-skip {
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  font-size: 13px;
+  text-decoration: underline;
+  width: auto;
+  margin: 0 auto;
+  min-height: auto;
+  cursor: pointer;
+}
+
+#tutorial-modal.tutorial-phase-1 .tutorial-btn-skip {
+  color: #6b8c72;
+}
+
+#tutorial-modal.tutorial-phase-2 .tutorial-btn-skip,
+#tutorial-modal.tutorial-phase-3 .tutorial-btn-skip,
+#tutorial-modal.tutorial-phase-4 .tutorial-btn-skip {
+  color: #6b7280;
+}
+
+.tutorial-btn-skip:hover {
+  opacity: 0.8;
+}
+
+/* ============================================================================
+   ACCESSIBILITY & RESPONSIVE
+   ========================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  #tutorial-modal,
+  .tutorial-content,
+  .tutorial-tile-highlight,
+  .tutorial-cursor-icon,
+  .tutorial-word-tile,
+  .tutorial-progress-fill {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (max-width: 375px) {
+  .tutorial-content {
+    width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+    overflow-y: auto;
+  }
+
+  .tutorial-title {
+    font-size: 24px;
+  }
+
+  .tutorial-description {
+    font-size: 14px;
+  }
+
+  .tutorial-grid {
+    max-width: 280px;
+  }
+
+  .tutorial-grid-sm {
+    max-width: 200px;
+  }
+
+  .tutorial-tile {
+    width: 28px;
+    height: 28px;
+  }
+
+  .tutorial-tile-md {
+    width: 48px;
+    height: 48px;
+    font-size: 14px;
+  }
+
+  .tutorial-word-tile {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+
+  .tutorial-victory-score {
+    font-size: 28px;
+  }
+}
+
+@media (min-width: 768px) {
+  .tutorial-content {
+    width: min(90vw, 600px);
+  }
+
+  .tutorial-title {
+    font-size: 44px;
+  }
+
+  .tutorial-description {
+    font-size: 18px;
+  }
+
+  .tutorial-grid {
+    max-width: 380px;
+  }
+
+  .tutorial-grid-sm {
+    max-width: 280px;
+  }
+
+  .tutorial-tile {
+    width: 38px;
+    height: 38px;
+  }
+
+  .tutorial-tile-md {
+    width: 68px;
+    height: 68px;
+    font-size: 18px;
+  }
+
+  .tutorial-word-tile {
+    width: 64px;
+    height: 64px;
+    font-size: 28px;
+  }
+}

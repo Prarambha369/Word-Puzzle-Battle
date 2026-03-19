@@ -24,6 +24,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&family=Space+Mono:wght@400;700&display=swap" />
   <link rel="stylesheet" href="style.css" />
+  <!-- Tutorial System CSS -->
+  <link rel="stylesheet" href="tutorial.css" />
 </head>
 <body>
 
@@ -97,6 +99,10 @@
           </svg>
           PLAY VS FRIEND
         </button>
+        <!-- Quick Start for Experienced Players -->
+        <button class="btn-play-secondary" id="btn-quick-start" title="Skip tutorial and start game immediately">
+          I Know the Rules
+        </button>
       </div>
 
       <div class="home-footer-row">
@@ -108,7 +114,7 @@
           </svg>
         </button>
         <p class="home-footer">By Prarambha Bashyal · Vanilla JS · PWA</p>
-        <!-- How to play -->
+        <!-- How to play / Tutorial -->
         <button class="footer-btn" id="btn-how-to-play" aria-label="How to play">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="10"/>
@@ -155,7 +161,7 @@
     </main>
   </div>
 
-  <!-- LETTER PICKER -->
+  <!-- LETTER PICKER MODAL -->
   <div class="modal-overlay hidden" id="letter-modal" role="dialog" aria-modal="true" aria-label="Choose a letter to plant">
     <div class="bottom-sheet">
       <div class="sheet-handle" aria-hidden="true"></div>
@@ -177,7 +183,7 @@
     </div>
   </div>
 
-  <!-- AI thinking pill -->
+  <!-- AI THINKING INDICATOR -->
   <div class="ai-thinking hidden" id="ai-thinking" aria-live="polite">
     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="ai-spin">
       <polyline points="23 4 23 10 17 10"/>
@@ -186,9 +192,7 @@
     GROWING WORD TREE…
   </div>
 
-  <script src="trie.js"></script>
-  <script src="game.js"></script>
-  <script src="ai-bot.js"></script>
+  <!-- SCRIPT: Theme Detection & Service Worker Registration -->
   <script>
     (function () {
       var stored = localStorage.getItem('wpb-theme');
@@ -207,5 +211,169 @@
         .catch(function(e) { console.warn('[WPB] SW failed:', e); });
     }
   </script>
+
+  <!-- CORE GAME SCRIPTS -->
+  <script src="trie.js"></script>
+  <script src="game.js"></script>
+  <script src="ai-bot.js"></script>
+  
+  <!-- TUTORIAL SYSTEM SCRIPT -->
+  <script src="tutorial.js"></script>
+
+  <!-- GAME INITIALIZATION & TUTORIAL INTEGRATION -->
+  <script>
+    /**
+     * Initialize game and tutorial system
+     * Handles tutorial display for first-time players
+     */
+    document.addEventListener('DOMContentLoaded', function() {
+      // Wait for Trie to be ready (built in Web Worker)
+      window.addEventListener('trie-ready', function() {
+        // Check if tutorial should be shown
+        if (window.tutorial && window.tutorial.shouldShowTutorial()) {
+          // Show tutorial
+          window.tutorial.show();
+          
+          // When tutorial completes, game will start
+          window.addEventListener('tutorial-completed', function() {
+            initializeGameFlow();
+          });
+        } else {
+          // Tutorial already completed or skipped, go directly to game flow
+          initializeGameFlow();
+        }
+      });
+    });
+
+    /**
+     * Initialize main game flow after tutorial (or immediately if skipped)
+     */
+    function initializeGameFlow() {
+      // Setup button handlers for home screen
+      setupHomeScreenButtons();
+    }
+
+    /**
+     * Setup event listeners for home screen buttons
+     */
+    function setupHomeScreenButtons() {
+      var btnVsAi = document.getElementById('btn-vs-ai');
+      var btnVsFriend = document.getElementById('btn-vs-friend');
+      var btnQuickStart = document.getElementById('btn-quick-start');
+      var btnSettings = document.getElementById('btn-settings');
+      var btnHowToPlay = document.getElementById('btn-how-to-play');
+      var themeToggle = document.getElementById('theme-toggle');
+
+      if (btnVsAi) {
+        btnVsAi.addEventListener('click', function() {
+          startGame('vs-ai');
+        });
+      }
+
+      if (btnVsFriend) {
+        btnVsFriend.addEventListener('click', function() {
+          startGame('vs-friend');
+        });
+      }
+
+      if (btnQuickStart) {
+        btnQuickStart.addEventListener('click', function() {
+          // For experienced players: skip tutorial and show difficulty selector
+          if (window.tutorial) {
+            window.tutorial.completeTutorial(); // Mark as completed so it won't show again
+          }
+          showDifficultyPrompt();
+        });
+      }
+
+      if (btnSettings) {
+        btnSettings.addEventListener('click', function() {
+          console.log('[WPB] Settings button clicked (not yet implemented)');
+        });
+      }
+
+      if (btnHowToPlay) {
+        btnHowToPlay.addEventListener('click', function() {
+          // Show tutorial again (even if previously completed)
+          if (window.tutorial) {
+            window.tutorial.hasCompletedTutorial = false;
+            window.tutorial.show();
+          }
+        });
+      }
+
+      if (themeToggle) {
+        themeToggle.addEventListener('click', function() {
+          var current = document.documentElement.getAttribute('data-theme') || 'dark';
+          var next = current === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          localStorage.setItem('wpb-theme', next);
+          updateThemeIcons(next);
+        });
+      }
+    }
+
+    /**
+     * Show difficulty prompt for quick-start players
+     */
+    function showDifficultyPrompt() {
+      var menuBody = document.getElementById('menu-body');
+      if (menuBody && menuBody.classList.contains('hidden')) {
+        menuBody.classList.remove('hidden');
+        // Focus on difficulty selector
+        var easyBtn = document.querySelector('[data-diff="easy"]');
+        if (easyBtn) easyBtn.focus();
+      }
+    }
+
+    /**
+     * Update theme toggle icons based on current theme
+     */
+    function updateThemeIcons(theme) {
+      var sun = document.getElementById('icon-sun');
+      var moon = document.getElementById('icon-moon');
+      if (sun && moon) {
+        sun.style.display = theme === 'dark' ? 'block' : 'none';
+        moon.style.display = theme === 'light' ? 'block' : 'none';
+      }
+    }
+
+    /**
+     * Start game with selected mode
+     */
+    function startGame(mode) {
+      var homeScreen = document.getElementById('home-screen');
+      var gameScreen = document.getElementById('game-screen');
+      
+      if (homeScreen && gameScreen) {
+        homeScreen.classList.add('hidden');
+        gameScreen.classList.remove('hidden');
+        
+        // Initialize game board and logic
+        if (window.game && typeof window.game.init === 'function') {
+          window.game.init(mode);
+        }
+      }
+    }
+
+    /**
+     * Return to home screen
+     */
+    function goHome() {
+      var homeScreen = document.getElementById('home-screen');
+      var gameScreen = document.getElementById('game-screen');
+      
+      if (homeScreen && gameScreen) {
+        gameScreen.classList.add('hidden');
+        homeScreen.classList.remove('hidden');
+        
+        // Reset game state
+        if (window.game && typeof window.game.reset === 'function') {
+          window.game.reset();
+        }
+      }
+    }
+  </script>
+
 </body>
 </html>
