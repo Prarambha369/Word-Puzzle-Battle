@@ -1,0 +1,484 @@
+/**
+ * Word Puzzle Battle — Multiplayer Styles
+ * Copyright (c) 2026 Prarambha Bashyal. All rights reserved.
+ * Source: https://github.com/Prarambha369/word-puzzle-battle
+ * License: Word Puzzle Battle Source-Available License v1.0
+ */
+
+/* ============================================================
+   LOBBY SCREEN (Image 2)
+   ============================================================ */
+
+.lobby-screen {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100%;
+}
+
+.lobby-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.lobby-back-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-accent);
+  cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lobby-back-btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+.lobby-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.lobby-section { padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+
+.lobby-heading {
+  font-family: 'Space Mono', monospace;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+.lobby-heading.accent { color: var(--color-accent); }
+
+.lobby-sub { font-size: 0.9rem; color: var(--color-text-muted); text-align: center; line-height: 1.5; }
+
+/* Room code card */
+.room-code-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.room-code-text {
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(2rem, 10vw, 2.8rem);
+  font-weight: 700;
+  color: var(--color-accent);
+  letter-spacing: 0.1em;
+}
+
+/* Join code input row */
+.lobby-join-row {
+  display: flex;
+  gap: 8px;
+}
+
+.lobby-code-input {
+  flex: 1;
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: 0.08em;
+  outline: none;
+  transition: border-color 120ms ease;
+}
+.lobby-code-input:focus       { border-color: var(--color-accent); }
+.lobby-code-input::placeholder { color: var(--color-text-muted); }
+
+.lobby-join-btn {
+  width: auto;
+  min-width: 80px;
+  padding: 12px 20px;
+  font-size: 0.75rem;
+}
+
+.lobby-error {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--color-danger);
+  text-align: center;
+  letter-spacing: 0.06em;
+}
+
+/* ── Radar animation ────────────────────────────────────── */
+.lobby-radar {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  margin: 8px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radar-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-accent);
+}
+.radar-ring--1 { width:  80px; height:  80px; opacity: 0.25; animation: radar-pulse 2s ease-out  0.0s infinite; }
+.radar-ring--2 { width: 140px; height: 140px; opacity: 0.15; animation: radar-pulse 2s ease-out  0.6s infinite; }
+.radar-ring--3 { width: 200px; height: 200px; opacity: 0.08; animation: radar-pulse 2s ease-out  1.2s infinite; }
+
+@keyframes radar-pulse {
+  0%   { transform: scale(0.85); opacity: 0.35; }
+  100% { transform: scale(1.15); opacity: 0;    }
+}
+
+.radar-centre {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--color-accent-dim);
+  border: 1.5px solid var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: var(--color-accent);
+  position: relative;
+  z-index: 2;
+}
+
+.radar-question {
+  font-family: 'Space Mono', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  margin-top: 2px;
+}
+
+/* ── Connection rows ─────────────────────────────────────── */
+.connection-list { display: flex; flex-direction: column; gap: 8px; }
+
+.connection-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+.connection-row--connected { border-color: var(--color-accent); }
+
+.conn-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-bg);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.conn-avatar--dim { background: var(--color-border); color: var(--color-text-muted); }
+
+.conn-info { flex: 1; }
+.conn-name {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+.conn-name.searching { color: var(--color-text-muted); font-style: italic; }
+.conn-status { font-size: 0.75rem; color: var(--color-text-muted); }
+
+.conn-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.conn-dot--green { background: var(--color-accent); }
+.conn-dot--dim   { background: var(--color-border); }
+
+.lobby-cancel-btn {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* Growing Word Tree footer */
+.lobby-growing-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+}
+.lobby-growing-bar {
+  width: 140px; height: 3px;
+  background: var(--color-border);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+.lobby-growing-bar::after {
+  content: '';
+  position: absolute;
+  left: -50%; top: 0;
+  width: 50%; height: 100%;
+  background: var(--color-accent);
+  animation: growing-bar 1.8s ease-in-out infinite;
+}
+@keyframes growing-bar {
+  0%   { left: -50%; }
+  100% { left: 120%; }
+}
+.lobby-growing-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  color: var(--color-accent);
+  opacity: 0.8;
+}
+
+.lobby-status-footer {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+/* ============================================================
+   MATCH READY OVERLAY — Image 1 (amber gradient)
+   ============================================================ */
+
+.match-ready-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: linear-gradient(180deg, #e8a838 0%, #c0704a 60%, #8a4a2a 100%);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.mr-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+}
+
+.mr-back-btn {
+  background: transparent;
+  border: none;
+  color: #1a1a1a;
+  font-size: 1.2rem;
+  cursor: pointer;
+  min-width: 44px; min-height: 44px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.mr-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+.mr-lobby-pill {
+  margin-top: 4px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 20px;
+  padding: 2px 12px;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  color: #1a1a1a;
+  text-align: center;
+  letter-spacing: 0.08em;
+}
+
+.mr-headline {
+  text-align: center;
+  padding: 8px 24px 16px;
+}
+.mr-big-title {
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(1.8rem, 8vw, 2.4rem);
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1.1;
+}
+.mr-sub {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  color: #22c55e;
+  letter-spacing: 0.06em;
+  margin-top: 6px;
+}
+
+/* Player cards */
+.mr-player-card {
+  margin: 0 20px 4px;
+  background: #0f0f0f;
+  border: 1px solid #243328;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mr-player-card--ready { border-color: #22c55e; }
+
+.mr-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.mr-player-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  color: #22c55e;
+}
+.mr-player-name {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #e8f0e8;
+}
+.mr-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.mr-dot--green { background: #22c55e; }
+
+.mr-avatar-area {
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mr-avatar-circle {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #0f0f0f;
+  font-family: 'Space Mono', monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.mr-avatar-area--scanning { opacity: 0.6; }
+.mr-scan-icon { color: #22c55e; }
+
+.mr-sync-bar-wrap { display: flex; align-items: center; gap: 8px; }
+.mr-sync-label { font-family: 'Space Mono', monospace; font-size: 0.55rem; letter-spacing: 0.1em; color: #6b8c72; flex-shrink: 0; }
+.mr-sync-bar { flex: 1; height: 4px; background: #1e4022; border-radius: 2px; overflow: hidden; }
+.mr-sync-fill { height: 100%; background: #22c55e; border-radius: 2px; transition: width 300ms ease; }
+.mr-sync-fill--scanning { background: #6b8c72; }
+.mr-sync-pct { font-family: 'Space Mono', monospace; font-size: 0.6rem; color: #22c55e; flex-shrink: 0; min-width: 32px; text-align: right; }
+
+.mr-ready-badge {
+  display: inline-flex;
+  align-self: flex-start;
+  background: #1e3d28;
+  color: #22c55e;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  border-radius: 6px;
+  padding: 4px 12px;
+}
+
+.mr-init-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: #6b8c72;
+  text-align: center;
+}
+
+.mr-scanning-dots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.mr-scanning-dots span {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #6b8c72;
+  animation: dot-pulse 1.2s ease-in-out infinite;
+}
+.mr-scanning-dots span:nth-child(2) { animation-delay: 0.4s; }
+
+@keyframes dot-pulse {
+  0%, 100% { opacity: 0.3; }
+  50%       { opacity: 1;   }
+}
+
+/* VS divider circle */
+.mr-vs-circle {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #0f0f0f;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  margin: 4px auto;
+  box-shadow: 0 0 16px rgba(34,197,94,0.4);
+}
+
+/* Start battle button */
+.mr-start-btn {
+  margin: 16px 20px 0;
+  width: calc(100% - 40px);
+  background: #22c55e;
+  color: #0f0f0f;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  min-height: 56px;
+  border: none;
+  box-shadow: 0 0 20px rgba(34,197,94,0.35);
+}
+.mr-start-btn:hover { opacity: 0.9; }
+
+/* Footer */
+.mr-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px 0;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  color: rgba(26,26,26,0.5);
+}
+
+/* ============================================================
+   ACCESSIBILITY & MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .radar-ring,
+  .lobby-growing-bar::after,
+  .mr-scanning-dots span,
+  .mr-sync-fill--scanning { animation: none !important; }
+}
