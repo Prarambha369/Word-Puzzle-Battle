@@ -100,14 +100,19 @@ class Tutorial {
   }
 
   /**
-   * Show tutorial
+   * Show tutorial - NO INVERTED LOGIC CHECK
+   * Simply displays the modal and starts from phase 1
    */
   show() {
-    if (!this.shouldShowTutorial()) return;
-    
     const modal = document.getElementById('tutorial-modal');
+    if (!modal) {
+      console.warn('[WPB] Tutorial modal not found');
+      return;
+    }
+    
     modal.style.display = 'flex';
     this.renderPhase(1);
+    console.log('[WPB] Tutorial showing Phase 1');
   }
 
   /**
@@ -149,7 +154,7 @@ class Tutorial {
     // Update button text
     const nextBtn = document.getElementById('tutorial-next-btn');
     if (phase === 4) {
-      nextBtn.textContent = 'START GAME';
+      nextBtn.textContent = 'START GAME 🚀';
       nextBtn.className = 'tutorial-btn tutorial-btn-primary tutorial-btn-start';
     } else {
       const btnTexts = ['', 'NEXT STEP', 'Next Step', 'Continue', 'START GAME'];
@@ -160,7 +165,7 @@ class Tutorial {
     // Update skip button text
     const skipBtn = document.getElementById('tutorial-skip-btn');
     if (phase === 1) {
-      skipBtn.textContent = 'I Know the Rules';
+      skipBtn.textContent = 'Skip Tutorial';
       skipBtn.style.display = 'block';
     } else {
       skipBtn.style.display = 'none';
@@ -199,76 +204,62 @@ class Tutorial {
 
     container.appendChild(grid);
 
-    // Update title and description
+    // Update text
     document.querySelector('.tutorial-title').innerHTML = '1. Plant a Letter';
     document.querySelector('.tutorial-description').innerHTML =
       'Tap an empty tile to place your first seed. The <span class="tutorial-accent">Trie dictionary</span> will validate your path.';
-
-    // Update progress label
     document.querySelector('.tutorial-progress-label').textContent = 'STEP 1 OF 4';
-
-    // Hide close button for Phase 1
-    const closeBtn = document.querySelector('.tutorial-close');
-    closeBtn.style.display = 'none';
   }
 
   /**
    * Phase 2: Grow a Word
    */
   renderPhase2(container, modal) {
-    const grid = document.createElement('div');
-    grid.className = 'tutorial-grid tutorial-grid-sm';
+    const gridContainer = document.createElement('div');
+    gridContainer.className = 'tutorial-mini-grid-container';
 
-    // Create 4x4 grid with example word
-    const exampleWord = { word: 'GRO', row: 0, col: 0 };
-    const tiles = [
-      { row: 0, col: 0, letter: 'S', empty: false, unplayed: true },
-      { row: 0, col: 1, letter: 'A', empty: false, unplayed: true },
-      { row: 0, col: 2, letter: 'L', empty: false, unplayed: true },
-      { row: 0, col: 3, letter: 'T', empty: false, unplayed: true },
-      { row: 1, col: 0, letter: 'G', empty: false, highlighted: true },
-      { row: 1, col: 1, letter: 'R', empty: false, highlighted: true },
-      { row: 1, col: 2, letter: 'O', empty: false, highlighted: true },
-      { row: 1, col: 3, letter: 'P', empty: false, unplayed: true },
-      { row: 2, col: 0, letter: 'B', empty: false, unplayed: true },
-      { row: 2, col: 1, letter: 'E', empty: false, unplayed: true },
-      { row: 2, col: 2, letter: 'W', empty: false, unplayed: true },
-      { row: 2, col: 3, letter: 'N', empty: false, unplayed: true },
-      { row: 3, col: 0, letter: 'M', empty: false, unplayed: true },
-      { row: 3, col: 1, letter: 'I', empty: false, unplayed: true },
-      { row: 3, col: 2, letter: 'D', empty: false, unplayed: true },
-      { row: 3, col: 3, letter: 'E', empty: false, unplayed: true },
+    const grid = document.createElement('div');
+    grid.className = 'tutorial-mini-grid';
+    grid.setAttribute('role', 'grid');
+    grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
+
+    const layout = [
+      ['S', 'A', 'L', 'T'],
+      ['G', 'R', 'O', 'P'],
+      ['B', 'E', 'W', 'N'],
+      ['M', 'I', 'D', 'E']
     ];
 
-    tiles.forEach(tileData => {
-      const tile = document.createElement('div');
-      tile.className = 'tutorial-tile tutorial-tile-md';
-      if (tileData.highlighted) {
-        tile.className += ' tutorial-tile-highlighted';
-      } else if (tileData.unplayed) {
-        tile.className += ' tutorial-tile-unplayed';
+    const highlighted = new Set(['G', 'R', 'O', 'W']);
+
+    for (let row = 0; row < 4; row++) {
+      for (let col = 0; col < 4; col++) {
+        const tile = document.createElement('div');
+        const letter = layout[row][col];
+        tile.className = 'tutorial-mini-tile';
+        if (highlighted.has(letter)) {
+          tile.classList.add('tutorial-tile-highlighted-orange');
+        }
+        tile.textContent = letter;
+        tile.setAttribute('role', 'gridcell');
+        grid.appendChild(tile);
       }
-      tile.textContent = tileData.letter;
-      grid.appendChild(tile);
-    });
+    }
 
-    // Wrap in container for styling
-    const gridWrapper = document.createElement('div');
-    gridWrapper.className = 'tutorial-grid-wrapper';
-    gridWrapper.appendChild(grid);
+    gridContainer.appendChild(grid);
 
-    // Add success badge
-    const badge = document.createElement('div');
-    badge.className = 'tutorial-badge tutorial-badge-success';
-    badge.innerHTML = '🌱 GROW CONNECTED!';
-    gridWrapper.appendChild(badge);
+    // Add "GROW CONNECTED" message
+    const message = document.createElement('div');
+    message.className = 'tutorial-grow-message';
+    message.innerHTML = '<span class="tutorial-leaf-icon">🍃</span> GROW CONNECTED!';
+    gridContainer.appendChild(message);
 
-    container.appendChild(gridWrapper);
+    container.appendChild(gridContainer);
 
     // Update text
     document.querySelector('.tutorial-title').innerHTML = '2. Grow a Word';
     document.querySelector('.tutorial-description').innerHTML =
-      'Connect letters in any direction—horizontally, vertically, or diagonally—to form words of 3+ letters.';
+      'Connect letters in any direction — horizontally, vertically, or diagonally — to form words of 3+ letters.';
     document.querySelector('.tutorial-progress-label').textContent = 'STEP 2 OF 4';
   }
 
@@ -276,53 +267,42 @@ class Tutorial {
    * Phase 3: Harvest Points
    */
   renderPhase3(container, modal) {
-    // Word display
+    const harvestContainer = document.createElement('div');
+    harvestContainer.className = 'tutorial-harvest-container';
+
+    // Scored word display
     const wordDisplay = document.createElement('div');
-    wordDisplay.className = 'tutorial-word-display';
-
-    const word = 'BATTLE';
-    word.split('').forEach(letter => {
-      const tile = document.createElement('div');
-      tile.className = 'tutorial-word-tile';
-      tile.textContent = letter;
-      wordDisplay.appendChild(tile);
-    });
-
-    // Floating badge
-    const pointsBadge = document.createElement('div');
-    pointsBadge.className = 'tutorial-points-badge';
-    pointsBadge.textContent = '+3 pts';
-
-    wordDisplay.appendChild(pointsBadge);
-
-    container.appendChild(wordDisplay);
-
-    // Scoring info
-    const scoringInfo = document.createElement('div');
-    scoringInfo.className = 'tutorial-scoring-info';
-    scoringInfo.innerHTML = `
-      <div class="tutorial-scoring-row">
-        <span>3-letter words earn <strong class="tutorial-accent">1pt</strong>.</span>
-      </div>
-      <div class="tutorial-scoring-row">
-        <span>4-letter words earn <strong class="tutorial-accent">2pts</strong>.</span>
-      </div>
-      <div class="tutorial-scoring-row">
-        <span>Long words (5+) earn <strong class="tutorial-accent">3pts</strong>.</span>
+    wordDisplay.className = 'tutorial-scored-word';
+    wordDisplay.innerHTML = `
+      <div class="tutorial-word-tiles">
+        <div class="tutorial-word-tile tutorial-tile-green">B</div>
+        <div class="tutorial-word-tile tutorial-tile-green">A</div>
+        <div class="tutorial-word-tile tutorial-tile-green">T</div>
+        <div class="tutorial-word-tile tutorial-tile-green">T</div>
+        <div class="tutorial-word-tile tutorial-tile-green">L</div>
+        <div class="tutorial-word-tile tutorial-tile-green">E</div>
       </div>
     `;
-    container.appendChild(scoringInfo);
+    harvestContainer.appendChild(wordDisplay);
 
-    // Success callout
-    const callout = document.createElement('div');
-    callout.className = 'tutorial-callout tutorial-callout-success';
-    callout.innerHTML = '<span class="tutorial-checkmark">✓</span> Scored words flash green!';
-    container.appendChild(callout);
+    // Points badge
+    const pointsBadge = document.createElement('div');
+    pointsBadge.className = 'tutorial-points-badge';
+    pointsBadge.innerHTML = '<span class="tutorial-leaf-small">🍃</span> +3 pts';
+    harvestContainer.appendChild(pointsBadge);
+
+    // Success message
+    const successMsg = document.createElement('div');
+    successMsg.className = 'tutorial-success-msg';
+    successMsg.innerHTML = '<span class="tutorial-checkmark">✓</span> Scored words flash green!';
+    harvestContainer.appendChild(successMsg);
+
+    container.appendChild(harvestContainer);
 
     // Update text
     document.querySelector('.tutorial-title').innerHTML = '3. Harvest Points';
     document.querySelector('.tutorial-description').innerHTML =
-      'Score points when you complete valid words. Each word length earns different points.';
+      '3-letter words earn <span style="color: var(--tutorial-accent)">1pt</span>. 4-letter words earn <span style="color: var(--tutorial-accent)">2pts</span>. Long words (5+) earn <span style="color: var(--tutorial-accent)">3pts</span>.';
     document.querySelector('.tutorial-progress-label').textContent = 'STEP 3 OF 4';
   }
 
@@ -332,21 +312,22 @@ class Tutorial {
   renderPhase4(container, modal) {
     const victoryCard = document.createElement('div');
     victoryCard.className = 'tutorial-victory-card';
-
     victoryCard.innerHTML = `
-      <div class="tutorial-victory-header">
-        <div class="tutorial-victory-label">BATTLE HUD</div>
-        <div class="tutorial-victory-badge">🏆</div>
+      <div class="tutorial-battle-hud">
+        <div class="tutorial-battle-label">BATTLE HUD</div>
+        <div class="tutorial-rocket-icon">🚀</div>
       </div>
 
-      <div class="tutorial-victory-content">
-        <div class="tutorial-victory-title">Victory Progress</div>
-        <div class="tutorial-victory-status">Almost there!</div>
-        <div class="tutorial-victory-score">19 / 20</div>
+      <div class="tutorial-victory-title">Victory Progress</div>
+      <div class="tutorial-victory-subtitle">Almost there!</div>
+
+      <div class="tutorial-progress-bar-large">
+        <div class="tutorial-progress-fill-large" style="width: 95%;"></div>
       </div>
 
-      <div class="tutorial-progress-bar tutorial-progress-bar-card">
-        <div class="tutorial-progress-fill" style="width: 95%;"></div>
+      <div class="tutorial-score-display">
+        <span class="tutorial-score-number">19</span>
+        <span class="tutorial-score-max">/ 20</span>
       </div>
 
       <div class="tutorial-victory-footer">
@@ -369,7 +350,7 @@ class Tutorial {
 
     // Show close button for Phase 4
     const closeBtn = document.querySelector('.tutorial-close');
-    closeBtn.style.display = 'flex';
+    if (closeBtn) closeBtn.style.display = 'flex';
   }
 
   /**
@@ -405,6 +386,7 @@ class Tutorial {
 
     // Dispatch custom event so game can start
     window.dispatchEvent(new CustomEvent('tutorial-completed'));
+    console.log('[WPB] Tutorial completed');
   }
 
   /**
