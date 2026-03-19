@@ -4,10 +4,6 @@
  * Copyright (c) 2026 Prarambha Bashyal. All rights reserved.
  * Source: https://github.com/Prarambha369/word-puzzle-battle
  * License: Word Puzzle Battle Source-Available License v1.0
- *
- * Free for personal/non-commercial use.
- * Commercial use requires a 27% gross revenue royalty agreement.
- * Attribution to the original author is mandatory in all derivatives.
 -->
 <html lang="en" data-theme="dark">
 <head>
@@ -24,7 +20,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&family=Space+Mono:wght@400;700&display=swap" />
   <link rel="stylesheet" href="style.css" />
-  <!-- Tutorial System CSS -->
   <link rel="stylesheet" href="tutorial.css" />
 </head>
 <body>
@@ -220,120 +215,43 @@
   <!-- TUTORIAL SYSTEM SCRIPT -->
   <script src="tutorial.js"></script>
 
-  <!-- GAME INITIALIZATION WITH TUTORIAL CACHE & 1-MONTH EXPIRY -->
+  <!-- GAME INITIALIZATION & TUTORIAL INTEGRATION -->
   <script>
     /**
-     * Tutorial Cache Manager
-     * Checks if tutorial was completed and if cache is still valid (less than 1 month)
-     */
-    var TutorialCacheManager = {
-      CACHE_KEY: 'wpb-tutorial-completed',
-      TIMESTAMP_KEY: 'wpb-tutorial-timestamp',
-      EXPIRY_DAYS: 30,
-
-      /**
-       * Check if tutorial should be shown
-       * Returns true if: never completed OR expired (>30 days)
-       */
-      shouldShowTutorial: function() {
-        var completed = localStorage.getItem(this.CACHE_KEY);
-        var timestamp = localStorage.getItem(this.TIMESTAMP_KEY);
-
-        // Never completed
-        if (!completed || completed !== 'true') {
-          return true;
-        }
-
-        // No timestamp, show tutorial to be safe
-        if (!timestamp) {
-          return true;
-        }
-
-        // Check if expired
-        var savedTime = parseInt(timestamp, 10);
-        var now = Date.now();
-        var ageInDays = (now - savedTime) / (1000 * 60 * 60 * 24);
-
-        // If older than 30 days, show tutorial again
-        if (ageInDays > this.EXPIRY_DAYS) {
-          console.log('[WPB] Tutorial cache expired (' + Math.floor(ageInDays) + ' days old), showing tutorial');
-          return true;
-        }
-
-        // Cache is valid, skip tutorial
-        console.log('[WPB] Tutorial cache valid (' + Math.floor(ageInDays) + ' days old), skipping tutorial');
-        return false;
-      },
-
-      /**
-       * Mark tutorial as completed with current timestamp
-       */
-      markCompleted: function() {
-        localStorage.setItem(this.CACHE_KEY, 'true');
-        localStorage.setItem(this.TIMESTAMP_KEY, Date.now().toString());
-        console.log('[WPB] Tutorial marked as completed');
-      },
-
-      /**
-       * Reset tutorial cache (for testing or reset scenarios)
-       */
-      reset: function() {
-        localStorage.removeItem(this.CACHE_KEY);
-        localStorage.removeItem(this.TIMESTAMP_KEY);
-        console.log('[WPB] Tutorial cache reset');
-      },
-
-      /**
-       * Get days remaining until tutorial expires
-       */
-      getDaysUntilExpiry: function() {
-        var timestamp = localStorage.getItem(this.TIMESTAMP_KEY);
-        if (!timestamp) return 0;
-
-        var savedTime = parseInt(timestamp, 10);
-        var now = Date.now();
-        var ageInDays = (now - savedTime) / (1000 * 60 * 60 * 24);
-        var daysRemaining = this.EXPIRY_DAYS - ageInDays;
-
-        return Math.max(0, Math.floor(daysRemaining));
-      }
-    };
-
-    /**
-     * Initialize game and tutorial system on page load
+     * MAIN GAME INITIALIZATION
+     * NO LONGER WAITS FOR trie-ready EVENT (which never fires)
+     * Uses simple 500ms timeout instead
      */
     document.addEventListener('DOMContentLoaded', function() {
-      // Setup button handlers immediately
-      setupHomeScreenButtons();
-      
-      var menuBody = document.getElementById('menu-body');
-      var loadingState = document.getElementById('loading-state');
-      
-      // Wait for Trie and game to be ready
+      // Wait for Trie build (happens in Web Worker)
       setTimeout(function() {
-        if (loadingState) loadingState.classList.add('hidden');
-        if (menuBody) menuBody.classList.remove('hidden');
+        console.log('[WPB] Initializing game after Trie build...');
         
-        // Check tutorial cache: should show tutorial?
-        var shouldShowTutorial = TutorialCacheManager.shouldShowTutorial();
-
-        if (shouldShowTutorial && window.tutorial) {
-          console.log('[WPB] Showing tutorial (not completed or expired)');
+        // Hide loading spinner
+        var loadingState = document.getElementById('loading-state');
+        if (loadingState) {
+          loadingState.classList.add('hidden');
+        }
+        
+        // Show menu
+        var menuBody = document.getElementById('menu-body');
+        if (menuBody) {
+          menuBody.classList.remove('hidden');
+        }
+        
+        // Setup all buttons NOW (not inside another callback)
+        setupHomeScreenButtons();
+        
+        // Check if tutorial should show
+        if (window.tutorial && window.tutorial.shouldShowTutorial()) {
           window.tutorial.show();
-          
-          // When tutorial completes, update cache
-          window.addEventListener('tutorial-completed', function() {
-            TutorialCacheManager.markCompleted();
-            console.log('[WPB] Tutorial completed, cache updated with expiry in 30 days');
-          });
-        } else {
-          console.log('[WPB] Skipping tutorial (cache valid)');
         }
       }, 500);
     });
 
     /**
      * Setup event listeners for home screen buttons
+     * This is where theme toggle gets attached
      */
     function setupHomeScreenButtons() {
       var btnVsAi = document.getElementById('btn-vs-ai');
@@ -341,10 +259,9 @@
       var btnQuickStart = document.getElementById('btn-quick-start');
       var btnSettings = document.getElementById('btn-settings');
       var btnHowToPlay = document.getElementById('btn-how-to-play');
-      var btnHome = document.getElementById('btn-home');
       var themeToggle = document.getElementById('theme-toggle');
 
-      // Difficulty buttons
+      // Difficulty selector
       var diffBtns = document.querySelectorAll('.diff-btn');
       diffBtns.forEach(function(btn) {
         btn.addEventListener('click', function() {
@@ -358,6 +275,7 @@
         });
       });
 
+      // Play buttons
       if (btnVsAi) {
         btnVsAi.addEventListener('click', function() {
           startGame('vs-ai');
@@ -370,41 +288,36 @@
         });
       }
 
+      // Quick start button
       if (btnQuickStart) {
-        btnQuickStart.addEventListener('click', function() {
-          // Mark tutorial as completed and show difficulty selector
-          TutorialCacheManager.markCompleted();
-          showDifficultyPrompt();
+        btnQuickStart.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (window.tutorial) {
+            window.tutorial.completeTutorial();
+          }
         });
       }
 
+      // Settings button
       if (btnSettings) {
         btnSettings.addEventListener('click', function() {
           console.log('[WPB] Settings button clicked (not yet implemented)');
         });
       }
 
+      // How to play button
       if (btnHowToPlay) {
-        btnHowToPlay.addEventListener('click', function() {
-          // Replay tutorial (reset completion status temporarily)
+        btnHowToPlay.addEventListener('click', function(e) {
+          e.preventDefault();
           if (window.tutorial) {
             window.tutorial.hasCompletedTutorial = false;
             window.tutorial.show();
-            
-            // Update cache when they finish
-            window.addEventListener('tutorial-completed', function() {
-              TutorialCacheManager.markCompleted();
-            });
           }
         });
       }
 
-      if (btnHome) {
-        btnHome.addEventListener('click', function() {
-          goHome();
-        });
-      }
-
+      // THEME TOGGLE - THIS IS THE KEY FIX
       if (themeToggle) {
         themeToggle.addEventListener('click', function() {
           var current = document.documentElement.getAttribute('data-theme') || 'dark';
@@ -412,34 +325,28 @@
           document.documentElement.setAttribute('data-theme', next);
           localStorage.setItem('wpb-theme', next);
           updateThemeIcons(next);
+          console.log('[WPB] Theme changed to:', next);
         });
       }
 
-      // Wire up win modal buttons
+      // Home button (in-game)
+      var btnHome = document.getElementById('btn-home');
+      if (btnHome) {
+        btnHome.addEventListener('click', goHome);
+      }
+
+      // Win modal buttons
       var playAgainBtn = document.getElementById('play-again');
-      var winHomeBtn = document.getElementById('win-home');
       if (playAgainBtn) {
-        playAgainBtn.addEventListener('click', function() {
-          goHome();
-        });
+        playAgainBtn.addEventListener('click', goHome);
       }
-      if (winHomeBtn) {
-        winHomeBtn.addEventListener('click', function() {
-          goHome();
-        });
-      }
-    }
 
-    /**
-     * Show difficulty prompt for quick-start players
-     */
-    function showDifficultyPrompt() {
-      var menuBody = document.getElementById('menu-body');
-      if (menuBody && menuBody.classList.contains('hidden')) {
-        menuBody.classList.remove('hidden');
-        var medBtn = document.querySelector('[data-diff="medium"]');
-        if (medBtn) medBtn.focus();
+      var winHomeBtn = document.getElementById('win-home');
+      if (winHomeBtn) {
+        winHomeBtn.addEventListener('click', goHome);
       }
+
+      console.log('[WPB] All buttons initialized');
     }
 
     /**
@@ -455,7 +362,7 @@
     }
 
     /**
-     * Start game with selected mode and difficulty
+     * Start game
      */
     function startGame(mode) {
       var homeScreen = document.getElementById('home-screen');
@@ -475,7 +382,7 @@
     }
 
     /**
-     * Return to home screen
+     * Return to home
      */
     function goHome() {
       var homeScreen = document.getElementById('home-screen');
@@ -490,9 +397,6 @@
         }
       }
     }
-
-    // Expose TutorialCacheManager for debugging/testing
-    window.TutorialCacheManager = TutorialCacheManager;
   </script>
 
 </body>
