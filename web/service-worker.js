@@ -1,5 +1,5 @@
 /**
- * Word Puzzle Battle
+ * Word Puzzle Battle — Service Worker
  * Copyright (c) 2026 Prarambha Bashyal. All rights reserved.
  * Source: https://github.com/Prarambha369/word-puzzle-battle
  * License: Word Puzzle Battle Source-Available License v1.0
@@ -9,7 +9,9 @@
  * Attribution to the original author is mandatory in all derivatives.
  */
 
-const CACHE  = 'wpb-v2';
+/* ── Bump this string on EVERY release so old caches are purged ─ */
+const CACHE = 'wpb-v3';
+
 const ASSETS = [
   '/',
   '/index.html',
@@ -17,6 +19,9 @@ const ASSETS = [
   '/trie.js',
   '/game.js',
   '/ai-bot.js',
+  '/profile.js',          /* ← NEW: player profile + stats */
+  '/tutorial.js',
+  '/tutorial.css',
   '/dictionary.json',
   '/manifest.json',
   '/assets/icons/icon-192.png',

@@ -31,7 +31,9 @@
        ╚══════════════════════════════════════════════════════╝ -->
   <div class="tab-panels">
 
-    <!-- ━━━ BATTLE TAB ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         BATTLE TAB
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <div class="tab-panel" data-tab="battle">
 
       <!-- HOME SCREEN ───────────────────────────────────────── -->
@@ -55,7 +57,7 @@
           </div>
         </header>
 
-        <!-- HERO CARD — inline SVG forest scene, no external assets -->
+        <!-- Hero card — inline SVG forest scene -->
         <div class="hero-card" aria-hidden="true">
           <svg class="hero-svg" viewBox="0 0 360 220"
                xmlns="http://www.w3.org/2000/svg"
@@ -78,70 +80,37 @@
                 <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
               </filter>
             </defs>
-
-            <!-- Sky background -->
             <rect width="360" height="220" fill="url(#hSky)"/>
-            <!-- Glow behind spiral logo -->
             <rect width="360" height="220" fill="url(#hGlow)"/>
-
-            <!--
-              Pine tree silhouettes — 8 trees, back to front.
-              Each tree = 2 triangles: wide base + narrow peak.
-              Colours lighten slightly toward centre for depth.
-            -->
-            <!-- T1 cx=32  h=75  (edge, darkest) -->
             <polygon points="32,171 2,208 62,208"    fill="#0d2010"/>
             <polygon points="32,133 16,165 49,165"   fill="#0d2010"/>
-            <!-- T8 cx=336 h=80  (edge, darkest) -->
             <polygon points="336,168 304,208 360,208" fill="#0d2010"/>
             <polygon points="336,128 318,162 354,162" fill="#0d2010"/>
-
-            <!-- T2 cx=76  h=108 -->
             <polygon points="76,154  33,208 119,208"  fill="#0f2612"/>
             <polygon points="76,100  52,145 100,145"  fill="#0f2612"/>
-            <!-- T7 cx=295 h=120 -->
             <polygon points="295,148 247,208 343,208" fill="#0f2612"/>
             <polygon points="295,88  269,138 321,138" fill="#0f2612"/>
-
-            <!-- T3 cx=120 h=143 -->
             <polygon points="120,137 63,208 177,208"  fill="#112a14"/>
             <polygon points="120,65  89,125 151,125"  fill="#112a14"/>
-            <!-- T6 cx=252 h=162 -->
             <polygon points="252,127 187,208 317,208"  fill="#112a14"/>
             <polygon points="252,46  216,114 288,114"  fill="#112a14"/>
-
-            <!-- T4 cx=165 h=170 -->
             <polygon points="165,123 97,208 233,208"  fill="#132e16"/>
             <polygon points="165,38  128,109 202,109" fill="#132e16"/>
-
-            <!-- T5 cx=208 h=193 — tallest, dead-centre -->
             <polygon points="208,112 131,208 285,208"  fill="#122c15"/>
             <polygon points="208,15  165,96  251,96"   fill="#122c15"/>
-
-            <!-- Ground line -->
             <rect x="0" y="205" width="360" height="15" fill="#091609"/>
-
-            <!-- Atmospheric mist near ground -->
             <rect width="360" height="220" fill="url(#hMist)"/>
-
-            <!-- Spiral / vortex logo centred on T5 -->
+            <!-- Spiral logo -->
             <g transform="translate(208,108)" filter="url(#hGlowFilter)">
-              <path d="M0,-32 C18,-32 32,-18 32,0 C32,22 16,36 0,36
-                       C-22,36 -36,18 -36,0 C-36,-26 -16,-44 14,-44"
-                    fill="none" stroke="#22c55e" stroke-width="3.5"
-                    stroke-linecap="round"/>
-              <path d="M0,-20 C11,-20 20,-11 20,0 C20,14 10,22 0,22
-                       C-13,22 -22,12 -22,0 C-22,-14 -10,-26 8,-28"
-                    fill="none" stroke="#22c55e" stroke-width="3"
-                    stroke-linecap="round"/>
-              <path d="M0,-10 C6,-10 10,-6 10,0 C10,7 5,11 0,11
-                       C-6,11 -10,6 -10,0"
-                    fill="none" stroke="#22c55e" stroke-width="2.5"
-                    stroke-linecap="round"/>
+              <path d="M0,-32 C18,-32 32,-18 32,0 C32,22 16,36 0,36 C-22,36 -36,18 -36,0 C-36,-26 -16,-44 14,-44"
+                    fill="none" stroke="#22c55e" stroke-width="3.5" stroke-linecap="round"/>
+              <path d="M0,-20 C11,-20 20,-11 20,0 C20,14 10,22 0,22 C-13,22 -22,12 -22,0 C-22,-14 -10,-26 8,-28"
+                    fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round"/>
+              <path d="M0,-10 C6,-10 10,-6 10,0 C10,7 5,11 0,11 C-6,11 -10,6 -10,0"
+                    fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round"/>
               <circle cx="0" cy="0" r="4.5" fill="#22c55e"/>
               <line x1="-24" y1="52" x2="24" y2="52"
-                    stroke="#22c55e" stroke-width="2"
-                    stroke-linecap="round" opacity="0.7"/>
+                    stroke="#22c55e" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
             </g>
           </svg>
         </div>
@@ -170,24 +139,21 @@
             </div>
           </div>
 
-          <!-- Play buttons — "I Know the Rules" removed -->
           <div class="play-buttons">
             <button class="btn-play-primary" id="btn-vs-ai">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                   viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                   aria-hidden="true">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                   fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="11" width="18" height="11" rx="2"/>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                 <line x1="12" y1="15" x2="12" y2="17"/>
               </svg>
               PLAY VS AI
             </button>
             <button class="btn-play-ghost" id="btn-vs-friend">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                   viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                   aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                   fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                 <circle cx="9" cy="7" r="4"/>
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
@@ -199,29 +165,27 @@
 
           <div class="home-footer-row">
             <button class="footer-btn" id="btn-settings" aria-label="Settings">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                   viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                   aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                   fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="3"/>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83
-                         l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21
-                         a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33
-                         l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06
+                         a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09
+                         A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06
+                         a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15
                          a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9
                          a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06
-                         A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0
-                         v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06
+                         A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09
+                         a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06
                          a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9
                          a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
               </svg>
             </button>
             <p class="home-footer">By Prarambha Bashyal · Vanilla JS · PWA</p>
             <button class="footer-btn" id="btn-how-to-play" aria-label="How to play">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                   viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                   aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                   fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="10"/>
                 <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
                 <line x1="12" y1="17" x2="12.01" y2="17"/>
@@ -231,11 +195,11 @@
         </div>
       </div><!-- /home-screen -->
 
-      <!-- GAME SCREEN ────────────────────────────────────────── -->
+      <!-- GAME SCREEN ─────────────────────────────────────────── -->
       <div id="game-screen" class="game-screen hidden">
         <header class="hud" role="banner">
           <div class="player-card" id="p1-card">
-            <span class="player-label">YOU</span>
+            <span class="player-label" id="p1-label">YOU</span>
             <span class="score" id="p1-score">0</span>
             <div class="progress-bar" role="progressbar"
                  aria-valuenow="0" aria-valuemin="0" aria-valuemax="20"
@@ -246,10 +210,9 @@
           <div class="hud-center">
             <div class="turn-badge" id="turn-badge" aria-live="polite">YOUR TURN</div>
             <button class="home-btn" id="btn-home" aria-label="Return to menu">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                   viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                   aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                   fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                 <polyline points="9 22 9 12 15 12 15 22"/>
               </svg>
@@ -274,7 +237,9 @@
 
     </div><!-- /tab-panel[battle] -->
 
-    <!-- ━━━ LOBBY TAB ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         LOBBY TAB
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <div class="tab-panel hidden" data-tab="lobby">
       <div class="stub-screen">
         <div class="stub-icon" aria-hidden="true">
@@ -292,92 +257,203 @@
       </div>
     </div>
 
-    <!-- ━━━ GARDEN TAB ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         GARDEN TAB
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <div class="tab-panel hidden" data-tab="garden">
-      <div class="stub-screen">
-        <div class="stub-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22V12"/>
-            <path d="M12 12C12 6 18 3 21 3s1 6-3 9"/>
-            <path d="M12 12C12 6 6 3 3 3S2 9 6 12"/>
-          </svg>
+      <div class="garden-screen">
+        <header class="settings-header">
+          <h2 class="settings-title">GARDEN</h2>
+        </header>
+        <div class="garden-body">
+          <div class="garden-hero">
+            <div class="garden-avatar-wrap">
+              <div class="garden-avatar" id="garden-avatar" aria-hidden="true">P</div>
+              <div class="garden-avatar-badge" aria-hidden="true">🌱</div>
+            </div>
+            <p class="garden-player-name" id="garden-player-name">—</p>
+            <p class="garden-status">STATUS: GROWTH ACTIVE</p>
+          </div>
+
+          <div class="garden-stats">
+            <div class="stat-card">
+              <span class="stat-value" id="stat-games-played">0</span>
+              <span class="stat-label">GAMES</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="stat-games-won">0</span>
+              <span class="stat-label">WINS</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="stat-words-found">0</span>
+              <span class="stat-label">WORDS</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value" id="stat-win-rate">—</span>
+              <span class="stat-label">WIN RATE</span>
+            </div>
+          </div>
+
+          <div class="garden-section-label">RECENT MILESTONE</div>
+          <div class="garden-milestone">
+            <div class="milestone-icon" aria-hidden="true">🌿</div>
+            <div class="milestone-info">
+              <p class="milestone-title">Seedling</p>
+              <p class="milestone-sub">Keep planting words to grow</p>
+            </div>
+          </div>
         </div>
-        <h2 class="stub-title">Garden</h2>
-        <p class="stub-sub">Your word growth &amp; stats</p>
-        <span class="stub-badge">PHASE 3</span>
       </div>
     </div>
 
-    <!-- ━━━ SETTINGS TAB ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         SETTINGS TAB — matches Image 4 exactly
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <div class="tab-panel hidden" data-tab="settings">
       <div class="settings-screen">
 
         <header class="settings-header">
+          <!-- Back arrow (goes to Battle tab) -->
+          <button class="settings-back-btn" id="settings-back" aria-label="Back">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="19" y1="12" x2="5" y2="12"/>
+              <polyline points="12 19 5 12 12 5"/>
+            </svg>
+          </button>
           <h2 class="settings-title">SETTINGS</h2>
         </header>
 
-        <div class="settings-body">
-
-          <section class="settings-group">
-            <h3 class="settings-group-label">APPEARANCE</h3>
+        <!-- ── AUDIO ───────────────────────────────────────────── -->
+        <div class="settings-section">
+          <div class="settings-section-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            </svg>
+            AUDIO
+          </div>
+          <div class="settings-card">
             <div class="settings-row">
-              <div class="settings-row-info">
-                <span class="settings-row-label">Theme</span>
-                <span class="settings-row-sub" id="theme-label">Dark</span>
-              </div>
-              <!-- Reuses same #theme-toggle ID — game.js wires it -->
-              <button class="settings-toggle-btn" id="theme-toggle"
-                      aria-label="Toggle theme" aria-pressed="true">
-                <span class="toggle-track">
-                  <span class="toggle-thumb"></span>
-                </span>
+              <span class="settings-row-label">Sound Effects</span>
+              <button class="toggle-btn toggle-btn--on" id="toggle-sfx"
+                      role="switch" aria-checked="true" aria-label="Sound Effects">
+                <span class="toggle-track"><span class="toggle-thumb"></span></span>
               </button>
             </div>
-          </section>
-
-          <section class="settings-group">
-            <h3 class="settings-group-label">TUTORIAL</h3>
+            <div class="settings-divider"></div>
             <div class="settings-row">
-              <div class="settings-row-info">
-                <span class="settings-row-label">Tutorial</span>
-                <span class="settings-row-sub">Replay the intro guide</span>
-              </div>
-              <button class="btn-ghost settings-action-btn" id="btn-reset-tutorial">
-                Reset
+              <span class="settings-row-label">Ambient Music</span>
+              <button class="toggle-btn" id="toggle-music"
+                      role="switch" aria-checked="false" aria-label="Ambient Music">
+                <span class="toggle-track"><span class="toggle-thumb"></span></span>
               </button>
             </div>
-          </section>
-
-          <section class="settings-group">
-            <h3 class="settings-group-label">ABOUT</h3>
-            <div class="settings-about">
-              <p class="settings-about-name">Word Puzzle Battle</p>
-              <p class="settings-about-line">v1.0.4 · Vanilla JS · PWA</p>
-              <p class="settings-about-line">© 2026 Prarambha Bashyal</p>
-              <a class="settings-about-link"
-                 href="https://github.com/Prarambha369/word-puzzle-battle"
-                 target="_blank" rel="noopener noreferrer">
-                View on GitHub ↗
-              </a>
-            </div>
-          </section>
-
+          </div>
         </div>
-      </div>
+
+        <!-- ── VISUALS ──────────────────────────────────────────── -->
+        <div class="settings-section">
+          <div class="settings-section-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83
+                       M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+            </svg>
+            VISUALS
+          </div>
+          <div class="settings-card">
+            <div class="theme-segmented" role="group" aria-label="Visual theme">
+              <button class="theme-btn" data-visual="dark" aria-pressed="false">DARK</button>
+              <button class="theme-btn" data-visual="light" aria-pressed="false">LIGHT</button>
+              <button class="theme-btn theme-btn--active" data-visual="deep-forest" aria-pressed="true">DEEP FOREST</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── DIFFICULTY ──────────────────────────────────────── -->
+        <div class="settings-section">
+          <div class="settings-section-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="20" x2="18" y2="10"/>
+              <line x1="12" y1="20" x2="12" y2="4"/>
+              <line x1="6"  y1="20" x2="6"  y2="14"/>
+            </svg>
+            DIFFICULTY
+          </div>
+          <div class="settings-card">
+            <div class="theme-segmented" role="group" aria-label="AI Difficulty">
+              <button class="theme-btn" data-setting-diff="easy" aria-pressed="false">EASY</button>
+              <button class="theme-btn theme-btn--active" data-setting-diff="medium" aria-pressed="true">MED</button>
+              <button class="theme-btn" data-setting-diff="hard" aria-pressed="false">HARD</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── ACCOUNT ──────────────────────────────────────────── -->
+        <div class="settings-section">
+          <div class="settings-section-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            ACCOUNT
+          </div>
+          <div class="settings-card account-card">
+            <div class="account-row">
+              <!-- Green circle avatar with leaf icon -->
+              <div class="account-avatar" id="settings-avatar" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
+                     fill="currentColor" aria-hidden="true" id="settings-avatar-icon">
+                  <path d="M17 8C8 10 5.9 16.17 3.82 21a2 2 0 0 0 2.85 2.44
+                           C8.17 22.19 9 21 9 21c0 0 1 1 4 1c5 0 9-4 9-9
+                           C22 9 17 8 17 8z"/>
+                </svg>
+              </div>
+              <div class="account-info">
+                <p class="account-status" id="settings-profile-status">STATUS: GROWTH ACTIVE</p>
+                <p class="account-name" id="settings-profile-name">Prarambha</p>
+              </div>
+            </div>
+            <!-- Edit name button -->
+            <button class="btn-ghost account-edit-btn" id="btn-edit-name">
+              ✏ EDIT NAME
+            </button>
+            <!-- Sign Out -->
+            <button class="btn-ghost account-signout-btn" id="btn-sign-out">
+              SIGN OUT
+            </button>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="settings-footer">
+          <p class="settings-footer-line">ROOT SYSTEM: ACTIVE</p>
+          <p class="settings-footer-line">GROWTH V1.0.4</p>
+        </div>
+
+      </div><!-- /settings-screen -->
     </div><!-- /tab-panel[settings] -->
 
   </div><!-- /tab-panels -->
 
   <!-- ╔══════════════════════════════════════════════════════╗
        ║  BOTTOM TAB BAR                                      ║
-       ║  Hidden automatically when game-screen is active.    ║
        ╚══════════════════════════════════════════════════════╝ -->
   <nav id="tab-bar" class="tab-bar" role="tablist" aria-label="Main navigation">
 
     <button class="tab-btn tab-btn--active" data-tab="battle"
             role="tab" aria-selected="true">
-      <!-- Lightning bolt = battle action -->
       <svg class="tab-icon" viewBox="0 0 24 24" fill="none"
            stroke="currentColor" stroke-width="2"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -386,8 +462,7 @@
       <span class="tab-label">BATTLE</span>
     </button>
 
-    <button class="tab-btn" data-tab="lobby"
-            role="tab" aria-selected="false">
+    <button class="tab-btn" data-tab="lobby" role="tab" aria-selected="false">
       <svg class="tab-icon" viewBox="0 0 24 24" fill="none"
            stroke="currentColor" stroke-width="2"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -399,8 +474,7 @@
       <span class="tab-label">LOBBY</span>
     </button>
 
-    <button class="tab-btn" data-tab="garden"
-            role="tab" aria-selected="false">
+    <button class="tab-btn" data-tab="garden" role="tab" aria-selected="false">
       <svg class="tab-icon" viewBox="0 0 24 24" fill="none"
            stroke="currentColor" stroke-width="2"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -411,8 +485,7 @@
       <span class="tab-label">GARDEN</span>
     </button>
 
-    <button class="tab-btn" data-tab="settings"
-            role="tab" aria-selected="false">
+    <button class="tab-btn" data-tab="settings" role="tab" aria-selected="false">
       <svg class="tab-icon" viewBox="0 0 24 24" fill="none"
            stroke="currentColor" stroke-width="2"
            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -423,8 +496,8 @@
                  l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15
                  a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9
                  a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06
-                 A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0
-                 v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06
+                 A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09
+                 a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06
                  a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9
                  a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
       </svg>
@@ -434,9 +507,10 @@
   </nav><!-- /tab-bar -->
 
   <!-- ╔══════════════════════════════════════════════════════╗
-       ║  FIXED GAME OVERLAYS (position:fixed, z-index 100+) ║
+       ║  OVERLAYS (position:fixed, always on top)            ║
        ╚══════════════════════════════════════════════════════╝ -->
 
+  <!-- Letter picker -->
   <div class="modal-overlay hidden" id="letter-modal"
        role="dialog" aria-modal="true" aria-label="Choose a letter to plant">
     <div class="bottom-sheet">
@@ -447,18 +521,123 @@
     </div>
   </div>
 
+  <!-- Win card — updated to match Image 3 -->
   <div class="modal-overlay hidden" id="win-modal"
        role="dialog" aria-modal="true" aria-label="Game over">
     <div class="win-card">
-      <p class="win-label">HARVEST RESULT</p>
-      <div class="win-title" id="win-title">YOU WIN</div>
-      <div class="win-scores" id="win-scores"></div>
-      <div class="win-last-word" id="win-last-word"></div>
-      <button class="btn-primary" id="play-again">GROW AGAIN</button>
-      <button class="btn-ghost" id="win-home" style="margin-top:8px">RETURN TO ROOTS</button>
+      <div class="win-header-bar">
+        <button class="win-close-btn" id="win-close" aria-label="Close">✕</button>
+        <span class="win-screen-title">VICTORY</span>
+        <span style="width:32px"></span>
+      </div>
+      <div class="win-pill" id="win-pill">YOU WIN</div>
+
+      <!-- Champion card -->
+      <div class="player-result-card player-result-card--winner" id="winner-card">
+        <div class="result-card-inner">
+          <div class="result-info">
+            <p class="result-badge">CHAMPION</p>
+            <p class="result-name" id="winner-name">Prarambha</p>
+            <p class="result-pts" id="winner-pts">0 pts</p>
+            <div class="result-winner-badge">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                   fill="none" stroke="currentColor" stroke-width="2.5"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              WINNER
+            </div>
+          </div>
+          <div class="result-avatar" id="winner-avatar" aria-hidden="true">P</div>
+        </div>
+      </div>
+
+      <!-- Opponent card -->
+      <div class="player-result-card" id="loser-card">
+        <div class="result-card-inner">
+          <div class="result-info">
+            <p class="result-name result-name--loser" id="loser-name">Guest</p>
+            <p class="result-pts result-pts--loser" id="loser-pts">0 pts</p>
+          </div>
+          <div class="result-avatar result-avatar--loser" id="loser-avatar" aria-hidden="true">G</div>
+        </div>
+      </div>
+
+      <!-- Last word card -->
+      <div class="last-word-card" id="last-word-card">
+        <p class="last-word-text">
+          Last word: <span class="last-word-highlight" id="win-last-word">—</span>
+        </p>
+        <p class="last-word-bonus" id="win-bonus"></p>
+        <button class="btn-ghost view-stats-btn" id="btn-view-stats">VIEW STATS</button>
+      </div>
+
+      <button class="btn-primary btn-play-again" id="play-again">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="1 4 1 10 7 10"/>
+          <path d="M3.51 15a9 9 0 1 0 .49-4"/>
+        </svg>
+        PLAY AGAIN
+      </button>
+      <button class="btn-ghost btn-return" id="win-home">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polygon points="12 2 22 22 2 22"/>
+        </svg>
+        RETURN TO ROOTS
+      </button>
     </div>
   </div>
 
+  <!-- Profile Setup Modal (first launch / after sign-out) -->
+  <div class="modal-overlay hidden" id="profile-modal"
+       role="dialog" aria-modal="true" aria-label="Create your profile">
+    <div class="profile-setup-card">
+      <div class="profile-setup-avatar-preview" id="profile-avatar-preview"
+           aria-hidden="true">?</div>
+      <h2 class="profile-setup-title">CREATE YOUR PROFILE</h2>
+      <p class="profile-setup-sub">Enter your battle name to begin growing.</p>
+      <input type="text"
+             class="profile-name-input" id="profile-name-input"
+             placeholder="Enter name (2–16 chars)"
+             maxlength="16"
+             autocomplete="off"
+             autocorrect="off"
+             autocapitalize="characters"
+             spellcheck="false"
+             aria-label="Your battle name" />
+      <p class="profile-name-error hidden" id="profile-name-error"
+         role="alert">Name must be at least 2 characters.</p>
+      <button class="btn-primary" id="profile-setup-confirm">
+        START GROWING
+      </button>
+    </div>
+  </div>
+
+  <!-- Edit Name Modal -->
+  <div class="modal-overlay hidden" id="edit-name-modal"
+       role="dialog" aria-modal="true" aria-label="Edit your name">
+    <div class="profile-setup-card">
+      <h2 class="profile-setup-title">EDIT NAME</h2>
+      <input type="text"
+             class="profile-name-input" id="edit-name-input"
+             placeholder="Enter new name"
+             maxlength="16"
+             autocomplete="off"
+             autocapitalize="characters"
+             spellcheck="false"
+             aria-label="New battle name" />
+      <p class="profile-name-error hidden" id="edit-name-error"
+         role="alert">Name must be at least 2 characters.</p>
+      <button class="btn-primary" id="edit-name-confirm">SAVE</button>
+      <button class="btn-ghost" id="edit-name-cancel" style="margin-top:8px">Cancel</button>
+    </div>
+  </div>
+
+  <!-- AI thinking pill -->
   <div class="ai-thinking hidden" id="ai-thinking" aria-live="polite">
     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
          fill="none" stroke="currentColor" stroke-width="2"
@@ -471,22 +650,22 @@
 
 </div><!-- /app-shell -->
 
-<!-- Theme bootstrap — runs before any paint, no flicker -->
+<!-- Theme bootstrap — must run before first paint, no FOUC -->
 <script>
   (function () {
-    var stored = localStorage.getItem('wpb-theme');
+    var stored = localStorage.getItem('wpb-visual-theme') || localStorage.getItem('wpb-theme');
     var dark   = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var theme  = stored || (dark ? 'dark' : 'light');
+    var theme  = stored || (dark ? 'dark' : 'dark');
     document.documentElement.setAttribute('data-theme', theme);
   })();
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./service-worker.js')
-      .catch(function (e) { console.warn('[WPB] SW failed:', e); });
+      .catch(function (e) { console.warn('[WPB] SW:', e); });
   }
 </script>
 
-<!-- Scripts — order is load-order dependent -->
 <script src="trie.js"></script>
+<script src="profile.js"></script>
 <script src="game.js"></script>
 <script src="ai-bot.js"></script>
 <script src="tutorial.js"></script>

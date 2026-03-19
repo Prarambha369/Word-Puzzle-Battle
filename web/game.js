@@ -3,10 +3,6 @@
  * Copyright (c) 2026 Prarambha Bashyal. All rights reserved.
  * Source: https://github.com/Prarambha369/word-puzzle-battle
  * License: Word Puzzle Battle Source-Available License v1.0
- *
- * Free for personal/non-commercial use.
- * Commercial use requires a 27% gross revenue royalty agreement.
- * Attribution to the original author is mandatory in all derivatives.
  */
 'use strict';
 
@@ -23,35 +19,79 @@ let scoredPaths  = new Set();
 let gameMode     = 'vs-ai';
 let aiDifficulty = 'medium';
 let lastWord     = '';
+let wordsFoundThisGame = 0;
 
 const WIN_SCORE = 20;
+
+/* ==========================================================
+   SETTINGS — persisted in localStorage
+   ========================================================== */
+
+const SETTINGS_KEY = 'wpb-settings';
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) { return {}; }
+}
+
+function saveSettings(patch) {
+  const s = Object.assign(loadSettings(), patch);
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch (e) {}
+  return s;
+}
+
+/* ==========================================================
+   THEME — DARK / LIGHT / DEEP FOREST
+   ========================================================== */
+
+/**
+ * Applies a visual theme to <html data-theme="...">.
+ * @param {'dark'|'light'|'deep-forest'} theme
+ */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('wpb-visual-theme', theme);
+  saveSettings({ visualTheme: theme });
+  _syncThemeButtons(theme);
+}
+
+/** Syncs both settings tab segmented control buttons. */
+function _syncThemeButtons(active) {
+  document.querySelectorAll('.theme-btn[data-visual]').forEach(btn => {
+    const on = btn.dataset.visual === active;
+    btn.classList.toggle('theme-btn--active', on);
+    btn.setAttribute('aria-pressed', String(on));
+  });
+}
 
 /* ==========================================================
    TAB BAR
    ========================================================== */
 
 /**
- * Switches the active tab panel and updates ARIA state.
- * Blocked during active gameplay — the board is full-screen.
- * @param {string} targetTab  — data-tab value
+ * Switches the active tab. Blocked during live gameplay.
+ * @param {string} targetTab
  */
 function switchToTab(targetTab) {
-  // Guard: no tab switching while a game is in progress
   const gameScreen = document.getElementById('game-screen');
   if (gameScreen && !gameScreen.classList.contains('hidden')) return;
 
   document.querySelectorAll('.tab-btn').forEach(btn => {
-    const active = btn.dataset.tab === targetTab;
-    btn.classList.toggle('tab-btn--active', active);
-    btn.setAttribute('aria-selected', String(active));
+    const on = btn.dataset.tab === targetTab;
+    btn.classList.toggle('tab-btn--active', on);
+    btn.setAttribute('aria-selected', String(on));
   });
 
   document.querySelectorAll('.tab-panel').forEach(panel => {
     panel.classList.toggle('hidden', panel.dataset.tab !== targetTab);
   });
+
+  // Refresh Garden stats whenever that tab is opened
+  if (targetTab === 'garden') refreshGardenUI();
 }
 
-/** Wires every tab button. Called once at boot. */
 function initTabBar() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => switchToTab(btn.dataset.tab));
@@ -64,36 +104,212 @@ function initTabBar() {
 
 /**
  * Switches between home and game screen.
- * Also shows/hides the tab bar — hidden during gameplay
- * so the board can use the full viewport height.
+ * Tab bar slides away during gameplay.
  * @param {'home'|'game'} screen
  */
 function showScreen(screen) {
   document.getElementById('home-screen').classList.toggle('hidden', screen !== 'home');
   document.getElementById('game-screen').classList.toggle('hidden', screen !== 'game');
-
-  // Tab bar disappears during gameplay for full-screen focus
   const tabBar = document.getElementById('tab-bar');
   if (tabBar) tabBar.classList.toggle('tab-bar--hidden', screen === 'game');
+}
+
+/* ==========================================================
+   PROFILE UI HELPERS
+   ========================================================== */
+
+/**
+ * Syncs the settings account card, Garden tab, and HUD player label
+ * with the current profile. Safe to call at any time.
+ */
+function refreshProfileUI() {
+  const prof = window.profile;
+
+  // Settings account card
+  const nameEl   = document.getElementById('settings-profile-name');
+  const statusEl = document.getElementById('settings-profile-status');
+  if (nameEl)   nameEl.textContent   = prof.exists() ? prof.name : '—';
+  if (statusEl) statusEl.textContent = prof.exists() ? 'STATUS: GROWTH ACTIVE' : 'NOT SIGNED IN';
+
+  // Avatar in settings — show initial as text inside the circle
+  const avatarEl   = document.getElementById('settings-avatar');
+  const avatarIcon = document.getElementById('settings-avatar-icon');
+  if (avatarEl && prof.exists()) {
+    // Replace SVG leaf with the player's initial
+    if (avatarIcon) avatarIcon.remove();
+    avatarEl.textContent = prof.initial;
+    avatarEl.classList.add('account-avatar--initial');
+  } else if (avatarEl) {
+    avatarEl.textContent = '?';
+  }
+
+  // HUD player 1 label
+  const p1LabelEl = document.getElementById('p1-label');
+  if (p1LabelEl && prof.exists()) p1LabelEl.textContent = prof.name.substring(0, 8);
+
+  refreshGardenUI();
+  window.refreshProfileUI = refreshProfileUI; // keep global ref
+}
+
+/** Syncs the Garden tab stat numbers. */
+function refreshGardenUI() {
+  const prof = window.profile;
+
+  const gardenAvatar = document.getElementById('garden-avatar');
+  const gardenName   = document.getElementById('garden-player-name');
+  if (gardenAvatar) gardenAvatar.textContent = prof.exists() ? prof.initial : '?';
+  if (gardenName)   gardenName.textContent   = prof.exists() ? prof.name    : '—';
+
+  const sp = document.getElementById('stat-games-played');
+  const sw = document.getElementById('stat-games-won');
+  const sf = document.getElementById('stat-words-found');
+  const sr = document.getElementById('stat-win-rate');
+  if (sp) sp.textContent = prof.gamesPlayed;
+  if (sw) sw.textContent = prof.gamesWon;
+  if (sf) sf.textContent = prof.wordsFound;
+  if (sr) sr.textContent = prof.winRate;
+}
+
+/* ==========================================================
+   SETTINGS WIRING
+   ========================================================== */
+
+function initSettings() {
+  const s = loadSettings();
+
+  // ── Back arrow ──────────────────────────────────────────
+  const backBtn = document.getElementById('settings-back');
+  if (backBtn) backBtn.addEventListener('click', () => switchToTab('battle'));
+
+  // ── Visual theme segmented ──────────────────────────────
+  const savedTheme = s.visualTheme || localStorage.getItem('wpb-visual-theme') || 'dark';
+  applyTheme(savedTheme);
+
+  document.querySelectorAll('.theme-btn[data-visual]').forEach(btn => {
+    btn.addEventListener('click', () => applyTheme(btn.dataset.visual));
+  });
+
+  // ── Settings-tab difficulty segmented ───────────────────
+  const savedDiff = s.aiDifficulty || localStorage.getItem('wpb-difficulty') || 'medium';
+  aiDifficulty = savedDiff;
+  document.querySelectorAll('.theme-btn[data-setting-diff]').forEach(btn => {
+    const on = btn.dataset.settingDiff === savedDiff;
+    btn.classList.toggle('theme-btn--active', on);
+    btn.setAttribute('aria-pressed', String(on));
+    btn.addEventListener('click', () => {
+      aiDifficulty = btn.dataset.settingDiff;
+      saveSettings({ aiDifficulty: aiDifficulty });
+      localStorage.setItem('wpb-difficulty', aiDifficulty);
+      // Also sync home screen difficulty buttons
+      document.querySelectorAll('.diff-btn').forEach(b => {
+        const a = b.dataset.diff === aiDifficulty;
+        b.classList.toggle('diff-btn--active', a);
+        b.setAttribute('aria-pressed', String(a));
+      });
+      document.querySelectorAll('.theme-btn[data-setting-diff]').forEach(b => {
+        const a = b.dataset.settingDiff === aiDifficulty;
+        b.classList.toggle('theme-btn--active', a);
+        b.setAttribute('aria-pressed', String(a));
+      });
+    });
+  });
+
+  // ── Audio toggles ───────────────────────────────────────
+  _initAudioToggle('toggle-sfx',   'sfxEnabled',   true);
+  _initAudioToggle('toggle-music', 'musicEnabled', false);
+
+  // ── Account: Sign Out ───────────────────────────────────
+  const signOutBtn = document.getElementById('btn-sign-out');
+  if (signOutBtn) {
+    signOutBtn.addEventListener('click', () => {
+      if (confirm('Sign out and reset your profile?')) {
+        window.profile.signOut();
+        refreshProfileUI();
+        // Show profile setup again
+        showProfileSetup(name => {
+          window.profile.create(name);
+          refreshProfileUI();
+        });
+      }
+    });
+  }
+
+  // ── Account: Edit Name ──────────────────────────────────
+  const editNameBtn = document.getElementById('btn-edit-name');
+  if (editNameBtn) {
+    editNameBtn.addEventListener('click', () => {
+      const modal  = document.getElementById('edit-name-modal');
+      const input  = document.getElementById('edit-name-input');
+      if (!modal || !input) return;
+      input.value = window.profile.name || '';
+      modal.classList.remove('hidden');
+      input.focus();
+      input.select();
+    });
+  }
+
+  const editConfirm = document.getElementById('edit-name-confirm');
+  const editCancel  = document.getElementById('edit-name-cancel');
+  const editModal   = document.getElementById('edit-name-modal');
+  const editInput   = document.getElementById('edit-name-input');
+  const editError   = document.getElementById('edit-name-error');
+
+  function doEditConfirm() {
+    const name = editInput ? editInput.value.trim() : '';
+    if (!name || name.length < 2) {
+      if (editError) editError.classList.remove('hidden');
+      return;
+    }
+    window.profile.create(name);
+    refreshProfileUI();
+    if (editModal) editModal.classList.add('hidden');
+    if (editError) editError.classList.add('hidden');
+  }
+
+  if (editConfirm) editConfirm.addEventListener('click', doEditConfirm);
+  if (editInput)   editInput.addEventListener('keydown', e => { if (e.key === 'Enter') doEditConfirm(); });
+  if (editCancel)  editCancel.addEventListener('click', () => {
+    if (editModal) editModal.classList.add('hidden');
+  });
+}
+
+/**
+ * Sets up one audio toggle button.
+ * @param {string}  btnId
+ * @param {string}  settingKey
+ * @param {boolean} defaultOn
+ */
+function _initAudioToggle(btnId, settingKey, defaultOn) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  const s = loadSettings();
+  const on = settingKey in s ? s[settingKey] : defaultOn;
+  _setToggle(btn, on);
+  btn.addEventListener('click', () => {
+    const next = btn.getAttribute('aria-checked') !== 'true';
+    _setToggle(btn, next);
+    saveSettings({ [settingKey]: next });
+  });
+}
+
+/** @param {HTMLElement} btn @param {boolean} on */
+function _setToggle(btn, on) {
+  btn.setAttribute('aria-checked', String(on));
+  btn.classList.toggle('toggle-btn--on', on);
 }
 
 /* ==========================================================
    HOME SCREEN BUTTONS
    ========================================================== */
 
-/** @returns {string} */
 function getSelectedDifficulty() {
   const a = document.querySelector('.diff-btn--active');
-  return a ? a.dataset.diff : 'medium';
+  return a ? a.dataset.diff : aiDifficulty;
 }
 
-/**
- * Wires all home screen, settings, and in-game buttons.
- * Called ONCE at the bottom of this file.
- */
 function initHomeScreen() {
 
-  // ── Difficulty toggle ─────────────────────────────────────
+  // ── Difficulty (home screen) ─────────────────────────────
   document.querySelectorAll('.diff-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.diff-btn').forEach(b => {
@@ -103,22 +319,27 @@ function initHomeScreen() {
       btn.classList.add('diff-btn--active');
       btn.setAttribute('aria-pressed', 'true');
       aiDifficulty = btn.dataset.diff;
+      saveSettings({ aiDifficulty: btn.dataset.diff });
       localStorage.setItem('wpb-difficulty', btn.dataset.diff);
+      // Sync settings tab difficulty too
+      document.querySelectorAll('.theme-btn[data-setting-diff]').forEach(b => {
+        const a = b.dataset.settingDiff === aiDifficulty;
+        b.classList.toggle('theme-btn--active', a);
+        b.setAttribute('aria-pressed', String(a));
+      });
     });
   });
 
-  // Restore saved difficulty selection
-  const savedDiff = localStorage.getItem('wpb-difficulty');
-  if (savedDiff) {
-    document.querySelectorAll('.diff-btn').forEach(b => {
-      const active = b.dataset.diff === savedDiff;
-      b.classList.toggle('diff-btn--active', active);
-      b.setAttribute('aria-pressed', String(active));
-    });
-    aiDifficulty = savedDiff;
-  }
+  // Restore saved difficulty on home screen
+  const savedDiff = loadSettings().aiDifficulty || localStorage.getItem('wpb-difficulty') || 'medium';
+  aiDifficulty = savedDiff;
+  document.querySelectorAll('.diff-btn').forEach(b => {
+    const on = b.dataset.diff === savedDiff;
+    b.classList.toggle('diff-btn--active', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
 
-  // ── Play VS AI ────────────────────────────────────────────
+  // ── Play VS AI ──────────────────────────────────────────
   const btnVsAi = document.getElementById('btn-vs-ai');
   if (btnVsAi) {
     btnVsAi.addEventListener('click', () => {
@@ -130,7 +351,7 @@ function initHomeScreen() {
     });
   }
 
-  // ── Play VS Friend ────────────────────────────────────────
+  // ── Play VS Friend ───────────────────────────────────────
   const btnVsFriend = document.getElementById('btn-vs-friend');
   if (btnVsFriend) {
     btnVsFriend.addEventListener('click', () => {
@@ -141,54 +362,19 @@ function initHomeScreen() {
     });
   }
 
-  // ── Settings gear icon in home footer → opens Settings tab ─
+  // ── Settings gear icon ──────────────────────────────────
   const settingsBtn = document.getElementById('btn-settings');
-  if (settingsBtn) {
-    settingsBtn.addEventListener('click', () => switchToTab('settings'));
-  }
+  if (settingsBtn) settingsBtn.addEventListener('click', () => switchToTab('settings'));
 
-  // ── How to play → replays tutorial ───────────────────────
+  // ── How to play ─────────────────────────────────────────
   const howBtn = document.getElementById('btn-how-to-play');
   if (howBtn) {
     howBtn.addEventListener('click', () => {
-      if (window.tutorial) {
-        window.tutorial.reset();
-        window.tutorial.show();
-      }
+      if (window.tutorial) { window.tutorial.reset(); window.tutorial.show(); }
     });
   }
 
-  // ── Theme toggle (lives in Settings tab) ─────────────────
-  const themeBtn = document.getElementById('theme-toggle');
-  if (themeBtn) {
-    // Sync initial pressed state and label
-    const current = document.documentElement.getAttribute('data-theme') || 'dark';
-    _applyThemeUI(current);
-
-    themeBtn.addEventListener('click', () => {
-      const root    = document.documentElement;
-      const current = root.getAttribute('data-theme') || 'dark';
-      const next    = current === 'dark' ? 'light' : 'dark';
-      root.setAttribute('data-theme', next);
-      localStorage.setItem('wpb-theme', next);
-      _applyThemeUI(next);
-    });
-  }
-
-  // ── Reset tutorial (Settings tab) ────────────────────────
-  const resetTutorialBtn = document.getElementById('btn-reset-tutorial');
-  if (resetTutorialBtn) {
-    resetTutorialBtn.addEventListener('click', () => {
-      if (window.tutorial) {
-        window.tutorial.reset();
-        // Switch to BATTLE tab so tutorial is visible
-        switchToTab('battle');
-        window.tutorial.show();
-      }
-    });
-  }
-
-  // ── In-game home button ───────────────────────────────────
+  // ── In-game home button ─────────────────────────────────
   const btnHome = document.getElementById('btn-home');
   if (btnHome) {
     btnHome.addEventListener('click', () => {
@@ -196,7 +382,7 @@ function initHomeScreen() {
     });
   }
 
-  // ── Letter picker cancel ──────────────────────────────────
+  // ── Letter picker cancel ────────────────────────────────
   const cancelBtn = document.getElementById('modal-cancel');
   if (cancelBtn) {
     cancelBtn.addEventListener('click', () => {
@@ -205,7 +391,7 @@ function initHomeScreen() {
     });
   }
 
-  // ── Win modal ─────────────────────────────────────────────
+  // ── Win modal buttons ───────────────────────────────────
   const playAgainBtn = document.getElementById('play-again');
   if (playAgainBtn) {
     playAgainBtn.addEventListener('click', () => {
@@ -216,39 +402,39 @@ function initHomeScreen() {
 
   const winHomeBtn = document.getElementById('win-home');
   if (winHomeBtn) winHomeBtn.addEventListener('click', goHome);
-}
 
-/**
- * Syncs theme toggle button state and label text.
- * @param {'dark'|'light'} theme
- */
-function _applyThemeUI(theme) {
-  const themeBtn   = document.getElementById('theme-toggle');
-  const themeLabel = document.getElementById('theme-label');
-  if (themeBtn)   themeBtn.setAttribute('aria-pressed', theme === 'light' ? 'true' : 'false');
-  if (themeLabel) themeLabel.textContent = theme === 'dark' ? 'Dark' : 'Light';
+  const winCloseBtn = document.getElementById('win-close');
+  if (winCloseBtn) winCloseBtn.addEventListener('click', goHome);
+
+  const viewStatsBtn = document.getElementById('btn-view-stats');
+  if (viewStatsBtn) {
+    viewStatsBtn.addEventListener('click', () => {
+      document.getElementById('win-modal').classList.add('hidden');
+      switchToTab('garden');
+      showScreen('home');
+    });
+  }
 }
 
 /* ==========================================================
    GAME LIFECYCLE
    ========================================================== */
 
-/** Resets all state and transitions to the game board. */
 function startGame() {
-  scores      = { p1: 0, p2: 0 };
-  currentTurn = 'p1';
-  gameOver    = false;
-  pendingCell = null;
-  scoredPaths = new Set();
-  lastWord    = '';
+  scores               = { p1: 0, p2: 0 };
+  currentTurn          = 'p1';
+  gameOver             = false;
+  pendingCell          = null;
+  scoredPaths          = new Set();
+  lastWord             = '';
+  wordsFoundThisGame   = 0;
   showScreen('game');
   renderBoard();
   updateHUD();
 }
 
-/** Returns to the home screen and cleans up any active overlays. */
 function goHome() {
-  gameOver = true; // stop AI from firing after navigation
+  gameOver = true;
   document.getElementById('win-modal').classList.add('hidden');
   document.getElementById('letter-modal').classList.add('hidden');
   showAIThinking(false);
@@ -259,30 +445,22 @@ function goHome() {
    BOARD
    ========================================================== */
 
-/** Builds the board state array and renders 100 tiles via DocumentFragment. */
 function renderBoard() {
   board = [];
   for (let r = 0; r < 10; r++) {
     board[r] = [];
-    for (let c = 0; c < 10; c++) {
+    for (let c = 0; c < 10; c++)
       board[r][c] = { letter: null, owner: null, row: r, col: c };
-    }
   }
   const grid = document.getElementById('board');
   const frag = document.createDocumentFragment();
-  for (let r = 0; r < 10; r++) {
+  for (let r = 0; r < 10; r++)
     for (let c = 0; c < 10; c++) frag.appendChild(createTileEl(r, c));
-  }
   grid.innerHTML = '';
   grid.appendChild(frag);
 }
 
-/**
- * Creates a single tile DOM element.
- * @param {number} r
- * @param {number} c
- * @returns {HTMLElement}
- */
+/** @returns {HTMLElement} */
 function createTileEl(r, c) {
   const el = document.createElement('div');
   el.className = 'tile';
@@ -302,7 +480,6 @@ function createTileEl(r, c) {
    TILE INTERACTION
    ========================================================== */
 
-/** Tile click / keypress handler. */
 function onTileClick() {
   if (gameOver) return;
   if (gameMode === 'vs-ai' && currentTurn === 'p2') return;
@@ -313,7 +490,6 @@ function onTileClick() {
   showLetterModal();
 }
 
-/** Opens the bottom-sheet letter picker using a DocumentFragment. */
 function showLetterModal() {
   const grid = document.getElementById('letter-grid');
   const frag = document.createDocumentFragment();
@@ -331,7 +507,6 @@ function showLetterModal() {
   document.getElementById('letter-modal').classList.remove('hidden');
 }
 
-/** Called when a letter is selected in the picker. */
 function onLetterChosen(letter) {
   document.getElementById('letter-modal').classList.add('hidden');
   if (!pendingCell) return;
@@ -343,13 +518,6 @@ function onLetterChosen(letter) {
    CORE LOGIC
    ========================================================== */
 
-/**
- * Places a letter, detects words, scores, and advances the turn.
- * @param {number} r
- * @param {number} c
- * @param {string} letter
- * @param {string} owner  — 'p1' | 'p2' | 'ai'
- */
 function placeLetterOnBoard(r, c, letter, owner) {
   board[r][c].letter = letter;
   board[r][c].owner  = owner;
@@ -366,6 +534,7 @@ function placeLetterOnBoard(r, c, letter, owner) {
         scoredPaths.add(key);
         pts += scoreWord(word);
         lastWord = word;
+        wordsFoundThisGame++;
         for (const [rr, cc] of cells) cellsToFlash.add(`${rr},${cc}`);
       }
       const scoreOwner = (owner === 'ai') ? 'p2' : owner;
@@ -378,25 +547,17 @@ function placeLetterOnBoard(r, c, letter, owner) {
   switchTurn();
 }
 
-/** Updates a single tile's DOM element without touching any other tile. */
 function updateTileEl(r, c) {
   const el = document.querySelector(`.tile[data-r="${r}"][data-c="${c}"]`);
   if (!el) return;
   const cell = board[r][c];
   el.textContent = cell.letter || '';
   el.className   = `tile tile--filled tile--owner-${cell.owner}`;
-  el.setAttribute('tabindex', '-1'); // remove from tab order once filled
-  const ownerName = cell.owner === 'p1' ? 'Player 1'
-                  : cell.owner === 'ai' ? 'AI'
-                  : 'Player 2';
+  el.setAttribute('tabindex', '-1');
+  const ownerName = cell.owner === 'p1' ? 'Player 1' : cell.owner === 'ai' ? 'AI' : 'Player 2';
   el.setAttribute('aria-label', `Letter ${cell.letter}, owned by ${ownerName}`);
 }
 
-/**
- * Triggers the score-flash animation on a set of cells via rAF.
- * Only animates transform + opacity — never layout properties.
- * @param {Set<string>} cellKeys  — 'row,col' strings
- */
 function flashCells(cellKeys) {
   for (const key of cellKeys) {
     const [r, c] = key.split(',').map(Number);
@@ -414,16 +575,6 @@ function flashCells(cellKeys) {
    WORD DETECTION
    ========================================================== */
 
-/**
- * Scans all 8 directions from the placed cell and returns valid words.
- * Spec §5: walk backward to line start, collect forward, extract all
- * substrings ≥ 3 that include the placed index, validate via trie.
- * @param {Array}  board
- * @param {number} placedRow
- * @param {number} placedCol
- * @param {Object} trie
- * @returns {{ word: string, cells: [number,number][] }[]}
- */
 function detectWords(board, placedRow, placedCol, trie) {
   const DIRS = [[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]];
   const found = [];
@@ -431,22 +582,15 @@ function detectWords(board, placedRow, placedCol, trie) {
 
   for (const [dr, dc] of DIRS) {
     let sr = placedRow, sc = placedCol;
-    while (inBounds(sr - dr, sc - dc) && board[sr - dr][sc - dc].letter) {
-      sr -= dr; sc -= dc;
-    }
-
+    while (inBounds(sr - dr, sc - dc) && board[sr - dr][sc - dc].letter) { sr -= dr; sc -= dc; }
     const line = [], coords = [];
     let r = sr, c = sc;
     while (inBounds(r, c) && board[r][c].letter) {
-      line.push(board[r][c].letter);
-      coords.push([r, c]);
-      r += dr; c += dc;
+      line.push(board[r][c].letter); coords.push([r, c]); r += dr; c += dc;
     }
-
     if (line.length < 3) continue;
     const pi = coords.findIndex(([rr, cc]) => rr === placedRow && cc === placedCol);
     if (pi === -1) continue;
-
     for (let s = 0; s <= pi; s++) {
       for (let e = pi + 1; e <= line.length; e++) {
         if (e - s < 3) continue;
@@ -462,35 +606,19 @@ function detectWords(board, placedRow, placedCol, trie) {
   return found;
 }
 
-/**
- * @param {number} r
- * @param {number} c
- * @returns {boolean}
- */
 function inBounds(r, c) { return r >= 0 && r < 10 && c >= 0 && c < 10; }
-
-/**
- * Points for a word by length. Spec §6.
- * @param {string} word
- * @returns {number}
- */
 function scoreWord(word) { return word.length >= 5 ? 3 : word.length === 4 ? 2 : 1; }
 
 /* ==========================================================
    TURN & WIN
    ========================================================== */
 
-/** Advances turn and fires AI if in VS-AI mode. */
 function switchTurn() {
   currentTurn = currentTurn === 'p1' ? 'p2' : 'p1';
   updateHUD();
   if (gameMode === 'vs-ai' && currentTurn === 'p2') triggerAI();
 }
 
-/**
- * Fires the AI move via setTimeout(0) so it never blocks the paint frame.
- * Spec §8: enforces 180ms budget inside aiSelectMove.
- */
 function triggerAI() {
   showAIThinking(true);
   setTimeout(() => {
@@ -504,35 +632,62 @@ function triggerAI() {
   }, 0);
 }
 
-/**
- * Checks score threshold and board-full conditions.
- * @returns {boolean} true if game is over
- */
 function checkWin() {
   if (scores.p1 >= WIN_SCORE || scores.p2 >= WIN_SCORE) {
-    const winner = scores.p1 >= WIN_SCORE ? 'YOU'
-                 : (gameMode === 'vs-ai' ? 'AI' : 'GUEST');
-    showWin(winner);
+    const p1Won = scores.p1 >= scores.p2;
+    showWin(p1Won);
     return true;
   }
   let filled = 0;
   for (let r = 0; r < 10; r++) for (let c = 0; c < 10; c++) if (board[r][c].letter) filled++;
   if (filled === 100) {
-    const w = scores.p1 > scores.p2 ? 'YOU'
-            : scores.p2 > scores.p1 ? (gameMode === 'vs-ai' ? 'AI' : 'GUEST')
-            : 'NOBODY';
-    showWin(w);
+    showWin(scores.p1 >= scores.p2);
     return true;
   }
   return false;
 }
 
-/** @param {string} winner */
-function showWin(winner) {
+/**
+ * Shows the victory modal with champion / loser cards matching Image 3.
+ * @param {boolean} p1Won
+ */
+function showWin(p1Won) {
   gameOver = true;
-  document.getElementById('win-title').textContent     = winner === 'NOBODY' ? "IT'S A TIE" : `${winner} WINS`;
-  document.getElementById('win-scores').textContent    = `${scores.p1} – ${scores.p2}`;
-  document.getElementById('win-last-word').textContent = lastWord ? `Last word: ${lastWord}` : '';
+
+  const prof = window.profile;
+  const playerName = prof.exists() ? prof.name : 'YOU';
+  const p2Name = gameMode === 'vs-ai' ? 'AI' : 'GUEST';
+
+  const winnerName = p1Won ? playerName : p2Name;
+  const loserName  = p1Won ? p2Name     : playerName;
+  const winnerPts  = p1Won ? scores.p1  : scores.p2;
+  const loserPts   = p1Won ? scores.p2  : scores.p1;
+
+  document.getElementById('win-pill').textContent    = p1Won ? 'YOU WIN' : 'YOU LOSE';
+  document.getElementById('win-pill').className      = `win-pill ${p1Won ? '' : 'win-pill--lose'}`;
+  document.getElementById('winner-name').textContent = winnerName;
+  document.getElementById('winner-pts').textContent  = `${winnerPts} pts`;
+  document.getElementById('loser-name').textContent  = loserName;
+  document.getElementById('loser-pts').textContent   = `${loserPts} pts`;
+
+  // Avatars — initial letter
+  const winnerInitial = winnerName[0].toUpperCase();
+  const loserInitial  = loserName[0].toUpperCase();
+  document.getElementById('winner-avatar').textContent = winnerInitial;
+  document.getElementById('loser-avatar').textContent  = loserInitial;
+
+  // Last word card
+  const lastWordEl = document.getElementById('win-last-word');
+  const bonusEl    = document.getElementById('win-bonus');
+  if (lastWordEl) lastWordEl.textContent = lastWord || '—';
+  if (bonusEl)    bonusEl.textContent    = lastWord && scoreWord(lastWord) >= 3 ? '+3 bonus points applied' : '';
+
+  // Record game in profile
+  if (prof.exists()) {
+    prof.recordGame({ won: p1Won, wordsFound: wordsFoundThisGame, points: scores.p1 });
+    refreshGardenUI();
+  }
+
   document.getElementById('win-modal').classList.remove('hidden');
 }
 
@@ -540,7 +695,6 @@ function showWin(winner) {
    HUD
    ========================================================== */
 
-/** Syncs all HUD elements to current game state. */
 function updateHUD() {
   document.getElementById('p1-score').textContent = scores.p1;
   document.getElementById('p2-score').textContent = scores.p2;
@@ -556,23 +710,26 @@ function updateHUD() {
   if (p2Bar) p2Bar.setAttribute('aria-valuenow', scores.p2);
 
   const badge = document.getElementById('turn-badge');
-  if (gameOver)                   badge.textContent = 'GAME OVER';
-  else if (gameMode === 'vs-ai')  badge.textContent = currentTurn === 'p1' ? 'YOUR TURN' : 'AI TURN';
-  else                            badge.textContent = currentTurn === 'p1' ? 'P1 TURN'   : 'P2 TURN';
+  if (gameOver)                    badge.textContent = 'GAME OVER';
+  else if (gameMode === 'vs-ai')   badge.textContent = currentTurn === 'p1' ? 'YOUR TURN' : 'AI TURN';
+  else                             badge.textContent = currentTurn === 'p1' ? 'P1 TURN'   : 'P2 TURN';
 }
 
-/** @param {boolean} show */
 function showAIThinking(show) {
   document.getElementById('ai-thinking').classList.toggle('hidden', !show);
 }
 
 /* ==========================================================
-   BOOT — script is at end of <body>, DOM is ready
+   BOOT
    ========================================================== */
 
 initTabBar();
+initSettings();
 initHomeScreen();
 showScreen('home');
+
+// expose refreshProfileUI globally for profile.js
+window.refreshProfileUI = refreshProfileUI;
 
 buildTrieAsync(t => {
   trie = t;
@@ -580,10 +737,24 @@ buildTrieAsync(t => {
   document.getElementById('loading-state').classList.add('hidden');
   document.getElementById('menu-body').classList.remove('hidden');
 
-  // Show tutorial on first visit — tutorial.js has already run
-  setTimeout(() => {
-    if (window.tutorial && window.tutorial.shouldShowTutorial()) {
-      window.tutorial.show();
-    }
-  }, 50);
+  // Profile gate — show name prompt on first visit
+  const prof = window.profile;
+  if (!prof.exists()) {
+    setTimeout(() => {
+      showProfileSetup(name => {
+        prof.create(name);
+        refreshProfileUI();
+        // After profile, show tutorial
+        if (window.tutorial && window.tutorial.shouldShowTutorial()) window.tutorial.show();
+      });
+    }, 300);
+  } else {
+    refreshProfileUI();
+    // Sync HUD label immediately
+    const p1LabelEl = document.getElementById('p1-label');
+    if (p1LabelEl) p1LabelEl.textContent = prof.name.substring(0, 8);
+    setTimeout(() => {
+      if (window.tutorial && window.tutorial.shouldShowTutorial()) window.tutorial.show();
+    }, 100);
+  }
 });
