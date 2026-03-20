@@ -794,3 +794,16 @@ button svg { pointer-events: none; flex-shrink: 0; }
 @media (min-height: 800px) {
   .hero-card { height: clamp(180px, 40vw, 240px); }
 }
+
+/* Settings about/legal links */
+.settings-about-link {
+  display: block;
+    font-family: var(--font-heading);
+      font-size: 0.7rem;
+        letter-spacing: 0.06em;
+          color: var(--color-accent);
+            text-decoration: none;
+              padding: 4px 0;
+                transition: opacity 120ms ease;
+                }
+                .settings-about-link:hover { opacity: 0.75; text-decoration: underline; }

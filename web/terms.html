@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<!--
+ * Word Puzzle Battle — Terms of Service
+ * Copyright (c) 2026 Prarambha Bashyal. All rights reserved.
+ * Source: https://github.com/Prarambha369/Word-Puzzle-Battle
+-->
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Terms of Service for Word Puzzle Battle." />
+  <title>Terms of Service — Word Puzzle Battle</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,600;9..40,700&family=Space+Mono:wght@400;700&display=swap" />
+  <style>
+    :root { --bg:#091609;--surface:#0d2010;--border:#1e4022;--text:#e8f0e8;--muted:#7a9e7c;--accent:#22c55e;--danger:#f87171; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;font-size:1rem;line-height:1.7;-webkit-font-smoothing:antialiased;background-image:radial-gradient(circle,rgba(34,197,94,0.04) 1px,transparent 1px);background-size:24px 24px;}
+    .page-wrap{max-width:720px;margin:0 auto;padding:48px 24px 80px;}
+    nav.top{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(9,22,9,0.92);backdrop-filter:blur(12px);z-index:50;}
+    .nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--text);}
+    .logo-box{width:36px;height:36px;background:var(--surface);border:1px solid var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:1rem;font-weight:700;color:var(--accent);}
+    .logo-name{font-family:'Space Mono',monospace;font-size:0.7rem;font-weight:700;letter-spacing:0.1em;}
+    .nav-back{font-family:'Space Mono',monospace;font-size:0.65rem;letter-spacing:0.08em;color:var(--accent);text-decoration:none;border:1px solid var(--border);padding:6px 14px;border-radius:6px;transition:background 120ms ease;}
+    .nav-back:hover{background:#14532d;}
+    .doc-header{margin-bottom:40px;padding-bottom:24px;border-bottom:1px solid var(--border);}
+    .eyebrow{font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:0.16em;color:var(--accent);margin-bottom:12px;}
+    .doc-title{font-family:'Space Mono',monospace;font-size:clamp(1.8rem,6vw,2.8rem);font-weight:700;color:var(--text);line-height:1.1;margin-bottom:16px;}
+    .doc-meta{font-size:0.85rem;color:var(--muted);}
+    .doc-meta span{color:var(--accent);font-family:'Space Mono',monospace;font-size:0.75rem;}
+    .toc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:40px;}
+    .toc-title{font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;color:var(--muted);margin-bottom:12px;}
+    .toc ol{padding-left:18px;display:flex;flex-direction:column;gap:6px;}
+    .toc a{color:var(--accent);text-decoration:none;font-size:0.9rem;}
+    .toc a:hover{text-decoration:underline;}
+    .info-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;padding:16px 20px;margin:16px 0;}
+    .info-card p{margin:0;font-size:0.9rem;color:var(--muted);}
+    .info-card strong{color:var(--text);}
+    .warn-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--danger);border-radius:8px;padding:16px 20px;margin:16px 0;}
+    .warn-card p{margin:0;font-size:0.9rem;color:var(--muted);}
+    .warn-card strong{color:var(--danger);}
+    .section{margin-bottom:40px;scroll-margin-top:80px;}
+    .section-num{font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:0.14em;color:var(--accent);margin-bottom:8px;}
+    .section h2{font-family:'Space Mono',monospace;font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:16px;line-height:1.3;}
+    .section p{color:#c8d8c8;margin-bottom:12px;font-size:0.95rem;}
+    .section ul,.section ol{padding-left:20px;margin-bottom:12px;}
+    .section li{color:#c8d8c8;margin-bottom:6px;font-size:0.95rem;}
+    .section a{color:var(--accent);}
+    .contact-card{background:var(--surface);border:1px solid var(--accent);border-radius:12px;padding:24px;margin-top:16px;}
+    .contact-card p{margin-bottom:8px;}
+    .contact-card a{color:var(--accent);text-decoration:none;}
+    .contact-card a:hover{text-decoration:underline;}
+    .doc-footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--border);display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;}
+    .doc-footer p{font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;color:var(--muted);}
+    .footer-links{display:flex;gap:24px;}
+    .footer-links a{font-family:'Space Mono',monospace;font-size:0.6rem;letter-spacing:0.08em;color:var(--accent);text-decoration:none;}
+    .footer-links a:hover{text-decoration:underline;}
+    @media(max-width:480px){.page-wrap{padding:32px 16px 60px;}}
+  </style>
+</head>
+<body>
+  <nav class="top">
+    <a href="index.html" class="nav-logo">
+      <div class="logo-box">W</div>
+      <span class="logo-name">WORD PUZZLE BATTLE</span>
+    </a>
+    <a href="index.html" class="nav-back">← BACK TO GAME</a>
+  </nav>
+
+  <div class="page-wrap">
+    <header class="doc-header">
+      <p class="eyebrow">LEGAL DOCUMENT</p>
+      <h1 class="doc-title">Terms of Service</h1>
+      <p class="doc-meta">Last updated: <span>March 2026</span> · Effective: <span>March 2026</span> · Version: <span>1.0</span></p>
+    </header>
+
+    <nav class="toc" aria-label="Table of contents">
+      <p class="toc-title">CONTENTS</p>
+      <ol>
+        <li><a href="#s1">Acceptance of Terms</a></li>
+        <li><a href="#s2">Description of the Game</a></li>
+        <li><a href="#s3">Eligibility</a></li>
+        <li><a href="#s4">User Accounts</a></li>
+        <li><a href="#s5">Acceptable Use</a></li>
+        <li><a href="#s6">Prohibited Conduct</a></li>
+        <li><a href="#s7">Advertising</a></li>
+        <li><a href="#s8">Intellectual Property</a></li>
+        <li><a href="#s9">Disclaimers</a></li>
+        <li><a href="#s10">Limitation of Liability</a></li>
+        <li><a href="#s11">Termination</a></li>
+        <li><a href="#s12">Changes to Terms</a></li>
+        <li><a href="#s13">Governing Law</a></li>
+        <li><a href="#s14">Contact</a></li>
+      </ol>
+    </nav>
+
+    <div class="info-card">
+      <p><strong>Plain English summary:</strong> Play fairly. Don't cheat or click ads artificially. We own the game code. You own your Google account. We can ban cheaters. The game is free to use for personal purposes.</p>
+    </div>
+
+    <section class="section" id="s1">
+      <p class="section-num">01 —</p>
+      <h2>Acceptance of Terms</h2>
+      <p>By accessing or playing Word Puzzle Battle at <strong>wordpuzzlebattle.web.app</strong> (the "Game"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, please do not use the Game.</p>
+      <p>These Terms are in addition to our <a href="privacy.html">Privacy Policy</a>, which is incorporated by reference.</p>
+    </section>
+
+    <section class="section" id="s2">
+      <p class="section-num">02 —</p>
+      <h2>Description of the Game</h2>
+      <p>Word Puzzle Battle is a free, browser-based, competitive word-building game. Two players take turns placing letters on a shared 10×10 grid. Valid English words score points. First to 20 points wins.</p>
+      <p>The Game includes single-player mode against AI, real-time multiplayer via Firebase, player statistics tracking, optional Google account sign-in, and advertisements served by Google AdSense and AdMob.</p>
+    </section>
+
+    <section class="section" id="s3">
+      <p class="section-num">03 —</p>
+      <h2>Eligibility</h2>
+      <p>You must be at least <strong>13 years old</strong> to use the Game. If you are between 13 and 18, a parent or guardian must have reviewed and agreed to these Terms on your behalf.</p>
+    </section>
+
+    <section class="section" id="s4">
+      <p class="section-num">04 —</p>
+      <h2>User Accounts</h2>
+      <p>You may play as a guest without an account. Optionally, you can sign in with your Google account to save statistics across devices. You are responsible for all activity under your account. You may delete your account at any time through the Settings page.</p>
+    </section>
+
+    <section class="section" id="s5">
+      <p class="section-num">05 —</p>
+      <h2>Acceptable Use</h2>
+      <p>You agree to use the Game only for lawful purposes, for personal entertainment, and in a way that does not infringe the rights of others. You may share the game link with friends and report bugs via GitHub.</p>
+    </section>
+
+    <section class="section" id="s6">
+      <p class="section-num">06 —</p>
+      <h2>Prohibited Conduct</h2>
+      <p>You agree NOT to:</p>
+      <ul>
+        <li>Cheat, use bots, or use automated tools to play the game</li>
+        <li>Manipulate the multiplayer system to gain unfair advantage</li>
+        <li>Attempt to hack, reverse engineer, or disrupt the Game</li>
+        <li>Attempt to access another user's account</li>
+        <li>Use the Game to harass, threaten, or harm other players</li>
+        <li>Use the Game for any commercial purpose without our permission</li>
+        <li>Violate any applicable laws or regulations</li>
+      </ul>
+      <div class="warn-card">
+        <p><strong>Ad clicking policy:</strong> Do not click on advertisements for any reason other than genuine interest. Clicking your own ads, asking others to click ads, or using any method to generate artificial clicks or impressions is strictly prohibited and constitutes fraud. Violations result in immediate account termination.</p>
+      </div>
+    </section>
+
+    <section class="section" id="s7">
+      <p class="section-num">07 —</p>
+      <h2>Advertising</h2>
+      <p>The Game displays advertisements provided by <strong>Google AdSense</strong> and <strong>Google AdMob</strong>. These ads keep the Game free. By using the Game, you acknowledge that ads will be displayed and that Google may use cookies to personalise ads. You can opt out at <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener">google.com/settings/ads</a>.</p>
+    </section>
+
+    <section class="section" id="s8">
+      <p class="section-num">08 —</p>
+      <h2>Intellectual Property</h2>
+      <p>Word Puzzle Battle, including its name, design, code, graphics, and content, is the intellectual property of <strong>Prarambha Bashyal</strong> and is protected by copyright law.</p>
+      <p>The source code is available under the <strong>Word Puzzle Battle Source-Available License v1.0</strong>: free for personal, educational, and non-commercial use; commercial use requires a 27% gross revenue royalty agreement; forks and derivatives allowed with mandatory attribution.</p>
+    </section>
+
+    <section class="section" id="s9">
+      <p class="section-num">09 —</p>
+      <h2>Disclaimers</h2>
+      <p>The Game is provided <strong>"as is"</strong> without any warranties. We do not guarantee the Game will be available at all times, free of errors, or that specific features will remain available. The Game may be temporarily unavailable due to maintenance or circumstances beyond our control.</p>
+    </section>
+
+    <section class="section" id="s10">
+      <p class="section-num">10 —</p>
+      <h2>Limitation of Liability</h2>
+      <p>To the maximum extent permitted by applicable law, Prarambha Bashyal shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Game. Since the Game is free, our total liability to you is zero.</p>
+    </section>
+
+    <section class="section" id="s11">
+      <p class="section-num">11 —</p>
+      <h2>Termination</h2>
+      <p>We may terminate or suspend your access immediately, without prior notice, for breach of these Terms, cheating, ad fraud, abusive behaviour, or illegal activity. You may stop using the Game at any time and delete your account via Settings.</p>
+    </section>
+
+    <section class="section" id="s12">
+      <p class="section-num">12 —</p>
+      <h2>Changes to Terms</h2>
+      <p>We reserve the right to modify these Terms at any time. When we do, we will update the "Last updated" date at the top of this page. Your continued use of the Game after changes are posted constitutes your acceptance of the revised Terms.</p>
+    </section>
+
+    <section class="section" id="s13">
+      <p class="section-num">13 —</p>
+      <h2>Governing Law</h2>
+      <p>These Terms shall be governed by and construed in accordance with the laws of <strong>Nepal</strong>, without regard to conflict of law provisions. Any disputes shall be subject to the exclusive jurisdiction of the courts of Nepal.</p>
+    </section>
+
+    <section class="section" id="s14">
+      <p class="section-num">14 —</p>
+      <h2>Contact</h2>
+      <div class="contact-card">
+        <p><strong>Word Puzzle Battle</strong></p>
+        <p>Developer: Prarambha Bashyal</p>
+        <p>Country: Nepal</p>
+        <p>GitHub: <a href="https://github.com/Prarambha369/Word-Puzzle-Battle" target="_blank" rel="noopener">github.com/Prarambha369/Word-Puzzle-Battle</a></p>
+        <p>Website: <a href="https://wordpuzzlebattle.web.app">wordpuzzlebattle.web.app</a></p>
+      </div>
+    </section>
+
+    <footer class="doc-footer">
+      <p>ROOT SYSTEM: ACTIVE · GROWTH V1.0.4</p>
+      <div class="footer-links">
+        <a href="index.html">← Back to Game</a>
+        <a href="privacy.html">Privacy Policy</a>
+      </div>
+      <p>© 2026 Prarambha Bashyal. All rights reserved.</p>
+    </footer>
+  </div>
+</body>
+</html>

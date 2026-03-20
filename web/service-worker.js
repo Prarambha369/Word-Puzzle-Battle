@@ -21,9 +21,16 @@ const ASSETS = [
   '/ai-bot.js',
   '/profile.js',          /* ← NEW: player profile + stats */
   '/tutorial.js',
+  '/auth.js',
+  '/auth.css',
+  '/firebase-multiplayer.js',
+  '/multiplayer.css',
+  '/config.js',
   '/tutorial.css',
   '/dictionary.json',
   '/manifest.json',
+  '/privacy.html',
+  '/terms.html',
   '/assets/icons/icon-192.png',
   '/assets/icons/icon-512.png'
 ];
