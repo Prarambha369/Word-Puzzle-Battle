@@ -3,41 +3,11 @@
  * Copyright (c) 2026 Prarambha Bashyal. All rights reserved.
  * Source: https://github.com/Prarambha369/word-puzzle-battle
  * License: Word Puzzle Battle Source-Available License v1.0
- *
- * ─── SETUP (5 minutes, completely free) ────────────────────
- *   1. Go to console.firebase.google.com
- *   2. Create project → "word-puzzle-battle"
- *   3. Build → Realtime Database → Create database → Start in TEST MODE
- *   4. Project Settings → Your apps → Add web app → Copy firebaseConfig
- *   5. Paste your firebaseConfig into WPB_FIREBASE_CONFIG below
- *   6. That's it. No server. No deployment. Free forever.
- *
- * ─── FIREBASE FREE TIER LIMITS ─────────────────────────────
- *   Simultaneous connections : 100       (enough for ~50 games)
- *   Storage                  : 1 GB      (you'll use ~1 MB)
- *   Bandwidth/month          : 10 GB     (you'll use ~10 MB)
- *   Cost                     : $0 forever on Spark plan
- *
- * ─── SECURITY RULES (paste into Firebase Console) ──────────
- *   {
- *     "rules": {
- *       "rooms": {
- *         "$roomId": {
- *           ".read":  true,
- *           ".write": true,
- *           "board":  { ".validate": "newData.isString()" }
- *         }
- *       }
- *     }
- *   }
  */
 'use strict';
 
 /* ==========================================================
    FIREBASE CONFIG
-   Loaded from web/config.js (gitignored) via window.WPB_CONFIG.
-   Never hardcode credentials here.
-   See config.example.js for the template.
    ========================================================== */
 function _getFirebaseConfig() {
   const cfg = window.WPB_CONFIG?.firebase;
@@ -45,8 +15,7 @@ function _getFirebaseConfig() {
     console.error(
       '[WPB:FB] Firebase config missing.\n' +
       '  1. Copy web/config.example.js → web/config.js\n' +
-      '  2. Fill in your Firebase project values.\n' +
-      '  3. config.js is gitignored — safe to use.'
+      '  2. Fill in your Firebase project values.'
     );
     return null;
   }
@@ -72,33 +41,41 @@ function generateRoomCode() {
    ========================================================== */
 class FirebaseMultiplayer {
   constructor() {
-    this.db          = null;   // Firebase database instance
-    this.roomRef     = null;   // Reference to current room node
-    this.roomCode    = null;
-    this.playerIndex = 0;      // 0 = host (P1), 1 = guest (P2)
-    this.myName      = 'AGENT';
-    this.opponentName= 'GUEST';
-    this._unsubscribe = null;  // cleanup function for listener
+    this.db           = null;
+    this.roomRef      = null;
+    this.roomCode     = null;
+    this.playerIndex  = 0;      // 0 = host (P1), 1 = guest (P2)
+    this.myName       = 'AGENT';
+    this.opponentName = 'GUEST';
+    this._unsubscribe = null;
     this._initialized = false;
   }
 
-  /* ── Init Firebase SDK (loaded via CDN) ─────────────────── */
-  init() {
+  /* ── Init Firebase SDK ──────────────────────────────────── */
+  async init() {
     if (this._initialized) return true;
     if (typeof firebase === 'undefined') {
-      console.error('[WPB:FB] Firebase SDK not loaded. Add CDN scripts to index.html');
+      console.error('[WPB:FB] Firebase SDK not loaded.');
       return false;
     }
     try {
       const cfg = _getFirebaseConfig();
       if (!cfg) return false;
-      // Initialise only once
-      if (!firebase.apps?.length) {
-        firebase.initializeApp(cfg);
-      }
+      if (!firebase.apps?.length) firebase.initializeApp(cfg);
       this.db = firebase.database();
       this._initialized = true;
       console.log('[WPB:FB] Firebase connected');
+
+      // Sign in anonymously so guests can write rooms
+      const currentUser = firebase.auth().currentUser;
+      if (!currentUser) {
+        try {
+          await firebase.auth().signInAnonymously();
+          console.log('[WPB:FB] Signed in anonymously for multiplayer');
+        } catch (anonErr) {
+          console.warn('[WPB:FB] Anonymous sign-in failed:', anonErr.message);
+        }
+      }
       return true;
     } catch (e) {
       console.error('[WPB:FB] Init failed:', e.message);
@@ -106,13 +83,13 @@ class FirebaseMultiplayer {
     }
   }
 
-  /* ── Create room (host flow) ─────────────────────────────── */
+  /* ── Create room (host flow) ────────────────────────────── */
   async createRoom(playerName) {
-    if (!this.init()) return null;
+    if (!await this.init()) return null;
     this.myName      = playerName.toUpperCase().substring(0, 16);
     this.playerIndex = 0;
 
-    // Generate a unique code — retry if collision
+    // Generate unique code — retry on collision
     let code;
     for (let i = 0; i < 10; i++) {
       code = generateRoomCode();
@@ -123,18 +100,17 @@ class FirebaseMultiplayer {
     this.roomCode = code;
     this.roomRef  = this.db.ref(`rooms/${code}`);
 
-    // Write initial room state
     await this.roomRef.set({
-      host:        this.myName,
-      guest:       null,
-      status:      'waiting',            // waiting | playing | finished
-      turn:        0,                    // 0 = host moves, 1 = guest moves
-      scores:      { host: 0, guest: 0 },
-      board:       _serializeBoard(_emptyBoard()),
-      lastMove:    null,
-      lastWord:    '',
-      createdAt:   firebase.database.ServerValue.TIMESTAMP,
-      updatedAt:   firebase.database.ServerValue.TIMESTAMP
+      host:      this.myName,
+      guest:     null,
+      status:    'waiting',
+      turn:      0,
+      scores:    { host: 0, guest: 0 },
+      board:     _serializeBoard(_emptyBoard()),
+      lastMove:  null,
+      lastWord:  '',
+      createdAt: firebase.database.ServerValue.TIMESTAMP,
+      updatedAt: firebase.database.ServerValue.TIMESTAMP
     });
 
     // Auto-delete room after 40 minutes
@@ -145,9 +121,9 @@ class FirebaseMultiplayer {
     return code;
   }
 
-  /* ── Join room (guest flow) ──────────────────────────────── */
+  /* ── Join room (guest flow) ─────────────────────────────── */
   async joinRoom(code, playerName) {
-    if (!this.init()) return false;
+    if (!await this.init()) return false;
     this.myName      = playerName.toUpperCase().substring(0, 16);
     this.playerIndex = 1;
     this.roomCode    = code.toUpperCase().trim();
@@ -160,14 +136,13 @@ class FirebaseMultiplayer {
     }
     const room = snap.val();
     if (room.status !== 'waiting') {
-      showFBError('This room is full or the game has started.');
+      showFBError('This room is full or the game has already started.');
       return false;
     }
 
-    // Join the room
     await this.roomRef.update({
-      guest:    this.myName,
-      status:   'playing',
+      guest:     this.myName,
+      status:    'playing',
       updatedAt: firebase.database.ServerValue.TIMESTAMP
     });
 
@@ -175,14 +150,13 @@ class FirebaseMultiplayer {
     console.log(`[WPB:FB] Joined room ${this.roomCode}`);
     this._listenForGameState();
 
-    // Show match-ready screen immediately
     showMatchReadyScreen(this.myName, this.opponentName, () => {
       startFBMultiplayerGame(
         _deserializeBoard(snap.val().board),
         this.myName,
         this.opponentName,
         this.playerIndex,
-        0   // host always moves first
+        0
       );
     });
     return true;
@@ -192,11 +166,10 @@ class FirebaseMultiplayer {
   _listenForGuest() {
     const guestRef = this.roomRef.child('guest');
     const off = guestRef.on('value', snap => {
-      if (!snap.val()) return; // still waiting
+      if (!snap.val()) return;
       guestRef.off('value', off);
       this.opponentName = snap.val();
 
-      // Show match-ready screen for host
       this.roomRef.once('value').then(roomSnap => {
         const room = roomSnap.val();
         showMatchReadyScreen(this.myName, this.opponentName, () => {
@@ -213,7 +186,7 @@ class FirebaseMultiplayer {
     });
   }
 
-  /* ── Listen for game state changes (both players) ────────── */
+  /* ── Listen for game state changes (both players) ───────── */
   _listenForGameState() {
     if (this._unsubscribe) this._unsubscribe();
 
@@ -221,10 +194,8 @@ class FirebaseMultiplayer {
       if (!snap.exists()) return;
       const room = snap.val();
 
-      // Someone placed a letter — apply to our board
       if (room.lastMove) {
-        const move = room.lastMove;
-        // Ignore our own moves (we applied them optimistically)
+        const move  = room.lastMove;
         const isMine = (this.playerIndex === 0 && move.by === 'host') ||
                        (this.playerIndex === 1 && move.by === 'guest');
         if (!isMine) {
@@ -232,68 +203,60 @@ class FirebaseMultiplayer {
         }
       }
 
-      // Game over
       if (room.status === 'finished' && room.winner) {
-        showFBWin(room.winner, room.scores, room.lastWord, this.playerIndex, this.myName, this.opponentName);
+        showFBWin(room.winner, room.scores, room.lastWord,
+                  this.playerIndex, this.myName, this.opponentName);
       }
     });
 
     this._unsubscribe = () => this.roomRef.off('value', handler);
   }
 
-  /* ── Send a move ─────────────────────────────────────────── */
+  /* ── Send a move ────────────────────────────────────────── */
   async sendMove(r, c, letter) {
     if (!this.roomRef) return;
 
     const role = this.playerIndex === 0 ? 'host' : 'guest';
-
-    // Read current room state first
     const snap = await this.roomRef.once('value');
     const room = snap.val();
 
     // Validate it's our turn
-    const expectedTurn = this.playerIndex; // 0 = host, 1 = guest
-    if (room.turn !== expectedTurn) return;
+    if (room.turn !== this.playerIndex) return;
 
-    // Apply move to board locally and re-serialize
     const board = _deserializeBoard(room.board);
     board[r][c] = { letter: letter.toUpperCase(), owner: role, row: r, col: c };
 
-    // Detect words server-side equivalent — use client trie
     let pts = 0, newWords = [], lastWord = room.lastWord || '';
     if (window.trie) {
       const words = detectWords(board, r, c, window.trie);
-      for (const { word, cells } of words) {
-        const key = cells.map(([rr, cc]) => `${rr},${cc}`).join('|');
+      for (const { word } of words) {
         newWords.push(word);
         pts += scoreWord(word);
         lastWord = word;
       }
     }
 
-    // Update scores
     const scores = { ...room.scores };
-    const myScoreKey = this.playerIndex === 0 ? 'host' : 'guest';
-    scores[myScoreKey] = (scores[myScoreKey] || 0) + pts;
+    const myKey  = this.playerIndex === 0 ? 'host' : 'guest';
+    scores[myKey] = (scores[myKey] || 0) + pts;
 
-    // Check win
     const WIN_SCORE = 20;
     let status = room.status;
     let winner = room.winner || null;
-    if (scores[myScoreKey] >= WIN_SCORE) {
+    if (scores[myKey] >= WIN_SCORE) {
       status = 'finished';
       winner = this.myName;
     }
 
-    // Check board full
     let filled = 0;
-    for (let rr = 0; rr < 10; rr++) for (let cc = 0; cc < 10; cc++) if (board[rr][cc].letter) filled++;
+    for (let rr = 0; rr < 10; rr++)
+      for (let cc = 0; cc < 10; cc++)
+        if (board[rr][cc].letter) filled++;
     if (filled === 100 && status !== 'finished') {
       status = 'finished';
       winner = scores.host >= scores.guest ? room.host : room.guest;
     }
 
-    // Write to Firebase
     await this.roomRef.update({
       board:     _serializeBoard(board),
       turn:      this.playerIndex === 0 ? 1 : 0,
@@ -316,38 +279,33 @@ class FirebaseMultiplayer {
 
 /* ==========================================================
    BOARD SERIALIZATION
-   Firebase stores JSON — we serialize the 10×10 board as
-   a flat string for efficiency: "A:p1,null,B:p2,..." (100 entries)
    ========================================================== */
-
 function _emptyBoard() {
   const b = [];
   for (let r = 0; r < 10; r++) {
     b[r] = [];
-    for (let c = 0; c < 10; c++) b[r][c] = { letter: null, owner: null, row: r, col: c };
+    for (let c = 0; c < 10; c++)
+      b[r][c] = { letter: null, owner: null, row: r, col: c };
   }
   return b;
 }
 
-/** Serialize board to compact string for Firebase storage */
 function _serializeBoard(board) {
   const parts = [];
-  for (let r = 0; r < 10; r++) {
+  for (let r = 0; r < 10; r++)
     for (let c = 0; c < 10; c++) {
       const cell = board[r][c];
       parts.push(cell.letter ? `${cell.letter}:${cell.owner}` : '.');
     }
-  }
   return parts.join(',');
 }
 
-/** Deserialize compact string back to board array */
 function _deserializeBoard(str) {
   const board = _emptyBoard();
   if (!str) return board;
   const parts = str.split(',');
   let i = 0;
-  for (let r = 0; r < 10; r++) {
+  for (let r = 0; r < 10; r++)
     for (let c = 0; c < 10; c++) {
       const p = parts[i++];
       if (p && p !== '.') {
@@ -355,33 +313,100 @@ function _deserializeBoard(str) {
         board[r][c] = { letter, owner, row: r, col: c };
       }
     }
-  }
   return board;
 }
 
 /* ==========================================================
-   GAME.JS HOOKS — called from game.js
+   MATCH READY SCREEN
+   Shown to both players before the game starts.
+   Calls onStart() when the player taps START BATTLE.
+   ========================================================== */
+function showMatchReadyScreen(myName, opponentName, onStart) {
+  // Remove any existing overlay first
+  document.getElementById('match-ready-overlay')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id        = 'match-ready-overlay';
+  overlay.className = 'match-ready-overlay';
+  overlay.innerHTML = `
+    <div class="mr-header">
+      <div style="flex:1"></div>
+      <div class="mr-title">MATCH READY</div>
+      <div style="flex:1"></div>
+    </div>
+
+    <div class="mr-headline">
+      <div class="mr-big-title">PREPARE FOR BATTLE</div>
+      <div class="mr-sub">Root systems aligned. Connection established.</div>
+    </div>
+
+    <div class="mr-player-card mr-player-card--ready">
+      <div class="mr-card-header">
+        <div>
+          <div class="mr-player-label">YOU · PLAYER 1</div>
+          <div class="mr-player-name">${myName}</div>
+        </div>
+        <div class="mr-dot mr-dot--green"></div>
+      </div>
+      <div class="mr-avatar-area">
+        <div class="mr-avatar-circle">${myName[0]?.toUpperCase() || 'P'}</div>
+      </div>
+      <div class="mr-ready-badge">READY TO ENGAGE</div>
+    </div>
+
+    <div class="mr-vs-circle">VS</div>
+
+    <div class="mr-player-card">
+      <div class="mr-card-header">
+        <div>
+          <div class="mr-player-label">OPPONENT · PLAYER 2</div>
+          <div class="mr-player-name">${opponentName}</div>
+        </div>
+        <div class="mr-dot mr-dot--green"></div>
+      </div>
+      <div class="mr-avatar-area">
+        <div class="mr-avatar-circle">${opponentName[0]?.toUpperCase() || 'P'}</div>
+      </div>
+      <div class="mr-ready-badge">CONNECTED</div>
+    </div>
+
+    <button class="mr-start-btn" id="mr-start-btn">START BATTLE ⚡</button>
+
+    <div class="mr-footer">
+      <span>📡 SIGNAL: STRONG</span>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  document.getElementById('mr-start-btn')?.addEventListener('click', () => {
+    overlay.remove();
+    onStart();
+  });
+}
+
+/* ==========================================================
+   GAME.JS HOOKS
    ========================================================== */
 
 /**
- * Called by game.js onLetterChosen() when gameMode === 'vs-firebase'
+ * Called by game.js when a tile is chosen in vs-firebase mode.
+ * Applies optimistically then syncs to Firebase.
  */
 function fbOnTileChosen(r, c, letter) {
-  // Apply optimistically to local board immediately for responsiveness
   if (typeof placeLetterOnBoard === 'function') {
     placeLetterOnBoard(r, c, letter, 'p1');
   }
-  // Then sync to Firebase
   window.fbMultiplayer?.sendMove(r, c, letter);
 }
 
 /**
- * Apply an opponent's move received from Firebase
+ * Apply opponent's move received from Firebase listener.
  */
 function applyFBMove(move, scores, nextTurn) {
   if (!move) return;
 
-  // Apply to local board array
+  // Apply letter to local board
   if (typeof board !== 'undefined' && board[move.r]?.[move.c]) {
     board[move.r][move.c] = {
       letter: move.letter,
@@ -392,47 +417,44 @@ function applyFBMove(move, scores, nextTurn) {
     if (typeof updateTileEl === 'function') updateTileEl(move.r, move.c);
   }
 
-  // Flash scored tiles
+  // Flash scored cells
   if (move.newWords?.length > 0 && typeof detectWords === 'function' && window.trie) {
-    const words = detectWords(board, move.r, move.c, window.trie);
+    const words       = detectWords(board, move.r, move.c, window.trie);
     const cellsToFlash = new Set();
-    for (const { cells } of words) {
+    for (const { cells } of words)
       for (const [rr, cc] of cells) cellsToFlash.add(`${rr},${cc}`);
-    }
     if (typeof window.flashCells === 'function') window.flashCells(cellsToFlash);
   }
 
   // Update scores
   const myIndex = window.fbMultiplayer?.playerIndex || 0;
   if (typeof window.scores !== 'undefined') {
-    window.scores.p1 = myIndex === 0 ? scores.host   : scores.guest;
-    window.scores.p2 = myIndex === 0 ? scores.guest  : scores.host;
+    window.scores.p1 = myIndex === 0 ? scores.host  : scores.guest;
+    window.scores.p2 = myIndex === 0 ? scores.guest : scores.host;
   }
 
-  // Update turn
-  if (typeof currentTurn !== 'undefined') {
-    const myTurn = nextTurn === (window.fbMultiplayer?.playerIndex || 0);
-    window.currentTurn = myTurn ? 'p1' : 'p2';
-  }
+  // Update whose turn it is
+  const myTurn = nextTurn === (window.fbMultiplayer?.playerIndex || 0);
+  window.currentTurn = myTurn ? 'p1' : 'p2';
 
   if (typeof updateHUD === 'function') updateHUD();
 }
 
 /**
- * Show win card for Firebase game
+ * Show the win/game-over screen for a Firebase game.
  */
 function showFBWin(winnerName, scores, lastWord, myPlayerIndex, myName, opponentName) {
   const p1Won = winnerName === myName;
   if (typeof window.scores !== 'undefined') {
-    window.scores.p1 = myPlayerIndex === 0 ? scores.host   : scores.guest;
-    window.scores.p2 = myPlayerIndex === 0 ? scores.guest  : scores.host;
+    window.scores.p1 = myPlayerIndex === 0 ? scores.host  : scores.guest;
+    window.scores.p2 = myPlayerIndex === 0 ? scores.guest : scores.host;
   }
   if (typeof window.lastWord !== 'undefined') window.lastWord = lastWord || '';
   if (typeof showWin === 'function') showWin(p1Won);
 }
 
 /**
- * Start the Firebase multiplayer game — transitions to game board
+ * Transition to the game board for a Firebase multiplayer game.
  */
 function startFBMultiplayerGame(initialBoard, myName, opponentName, myPlayerIndex, firstTurn) {
   window.gameMode    = 'vs-firebase';
@@ -449,7 +471,7 @@ function startFBMultiplayerGame(initialBoard, myName, opponentName, myPlayerInde
   if (typeof showScreen  === 'function') showScreen('game');
   if (typeof renderBoard === 'function') renderBoard();
 
-  // Apply initial board state
+  // Apply any letters already on the board
   for (let r = 0; r < 10; r++) {
     for (let c = 0; c < 10; c++) {
       if (initialBoard[r][c]?.letter) {
@@ -463,16 +485,15 @@ function startFBMultiplayerGame(initialBoard, myName, opponentName, myPlayerInde
 }
 
 /* ==========================================================
-   LOBBY UI — rendered into the LOBBY tab
-   (reuses same HTML structure as multiplayer-client.js)
+   LOBBY UI — injected into the LOBBY tab on first click
    ========================================================== */
-
 function renderFBLobbyScreen() {
   const panel = document.querySelector('[data-tab="lobby"]');
   if (!panel) return;
 
-  const prof       = window.profile;
-  const playerName = prof?.exists() ? prof.name : 'AGENT';
+  const auth       = window.auth;
+  const prof       = auth?.isSignedIn ? auth : window.profile;
+  const playerName = prof?.name || 'AGENT';
 
   panel.innerHTML = `
     <div class="lobby-screen">
@@ -504,12 +525,10 @@ function renderFBLobbyScreen() {
           <button class="btn-play-primary lobby-join-btn" id="btn-join-room">JOIN</button>
         </div>
         <p class="lobby-error hidden" id="lobby-error"></p>
-        <p class="lobby-status-footer">
-          ☁ POWERED BY FIREBASE · FREE FOREVER
-        </p>
+        <p class="lobby-status-footer">☁ POWERED BY FIREBASE · FREE FOREVER</p>
       </div>
 
-      <!-- WAITING VIEW -->
+      <!-- WAITING VIEW (host) -->
       <div id="lobby-waiting" class="lobby-section hidden">
         <h3 class="lobby-heading accent">Waiting for a Friend…</h3>
         <p class="lobby-sub">Share this code to establish a connection</p>
@@ -518,7 +537,6 @@ function renderFBLobbyScreen() {
           <span class="room-code-text" id="room-code-display">—</span>
         </div>
 
-        <!-- Radar -->
         <div class="lobby-radar" aria-hidden="true">
           <div class="radar-ring radar-ring--3"></div>
           <div class="radar-ring radar-ring--2"></div>
@@ -584,8 +602,7 @@ function renderFBLobbyScreen() {
     </div>
   `;
 
-  /* ── Wire up buttons ──────────────────────────────────────── */
-
+  /* ── Wire buttons ───────────────────────────────────────── */
   document.getElementById('lobby-back')?.addEventListener('click', () => {
     if (typeof switchToTab === 'function') switchToTab('battle');
   });
@@ -643,7 +660,6 @@ function showFBError(msg) {
    ========================================================== */
 window.fbMultiplayer = new FirebaseMultiplayer();
 
-// Lazy-render lobby UI on first tab click
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelector('.tab-btn[data-tab="lobby"]')?.addEventListener('click', () => {
     const panel = document.querySelector('[data-tab="lobby"]');
@@ -654,8 +670,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// Expose globals so game.js can call them
-window.fbOnTileChosen      = fbOnTileChosen;
-window.applyFBMove         = applyFBMove;
-window.showFBWin           = showFBWin;
+window.fbOnTileChosen         = fbOnTileChosen;
+window.applyFBMove            = applyFBMove;
+window.showFBWin              = showFBWin;
 window.startFBMultiplayerGame = startFBMultiplayerGame;
+window.showMatchReadyScreen   = showMatchReadyScreen;

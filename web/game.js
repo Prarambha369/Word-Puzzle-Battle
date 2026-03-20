@@ -9,8 +9,8 @@
 /* ==========================================================
    STATE
    ========================================================== */
+let _currentTurn       = 'p1';
 let board              = [];
-let currentTurn        = 'p1';
 let scores             = { p1: 0, p2: 0 };
 let trie               = null;
 let gameOver           = false;
@@ -22,6 +22,21 @@ let lastWord           = '';
 let wordsFoundThisGame = 0;
 
 const WIN_SCORE = 20;
+
+/*
+ * Expose currentTurn as a window property so firebase-multiplayer.js
+ * can set it with window.currentTurn = 'p1' and the change is
+ * immediately visible to onTileClick() and switchTurn() which read
+ * the local variable via the getter below.
+ */
+Object.defineProperty(window, 'currentTurn', {
+  get() { return _currentTurn; },
+  set(v) { _currentTurn = v; }
+});
+
+// Alias for internal use throughout this file
+function getCurrentTurn()    { return _currentTurn; }
+function setCurrentTurn(val) { _currentTurn = val; }
 
 /* ==========================================================
    SETTINGS — persisted in localStorage
@@ -39,7 +54,7 @@ function saveSettings(patch) {
 }
 
 /* ==========================================================
-   THEME — DARK / LIGHT / DEEP FOREST
+   THEME
    ========================================================== */
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
@@ -73,7 +88,6 @@ function initTabBar() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       switchToTab(btn.dataset.tab);
-      // Lazy-render lobby on first tap
       if (btn.dataset.tab === 'lobby') {
         const panel = document.querySelector('[data-tab="lobby"]');
         if (panel && !panel.dataset.fbReady && typeof renderFBLobbyScreen === 'function') {
@@ -99,15 +113,14 @@ function showScreen(screen) {
    PROFILE UI
    ========================================================== */
 function refreshAllProfileUI() {
-  // Prefer auth.js (Google) → fall back to profile.js (local/guest)
   const auth = window.auth;
-  const prof = (auth?.isSignedIn) ? auth : window.profile;
+  const prof = auth?.isSignedIn ? auth : window.profile;
 
   const nameEl   = document.getElementById('settings-profile-name');
   const statusEl = document.getElementById('settings-profile-status');
   const avatarEl = document.getElementById('settings-avatar');
 
-  if (nameEl)   nameEl.textContent   = prof?.name    || '—';
+  if (nameEl)   nameEl.textContent   = prof?.name || '—';
   if (statusEl) statusEl.textContent = auth?.isSignedIn
     ? 'STATUS: GROWTH ACTIVE'
     : (window.profile?.exists() ? 'STATUS: GUEST MODE' : 'NOT SIGNED IN');
@@ -127,8 +140,9 @@ function refreshAllProfileUI() {
   const gardenAvatar = document.getElementById('garden-avatar');
   const gardenName   = document.getElementById('garden-player-name');
   const gardenStatus = document.getElementById('garden-status');
-  if (gardenName)   gardenName.textContent = prof?.name || '—';
-  if (gardenStatus) gardenStatus.textContent = auth?.isSignedIn ? '☁ SYNCED TO CLOUD' : '💾 LOCAL STORAGE';
+  if (gardenName)   gardenName.textContent   = prof?.name || '—';
+  if (gardenStatus) gardenStatus.textContent = auth?.isSignedIn
+    ? '☁ SYNCED TO CLOUD' : '💾 LOCAL STORAGE';
   if (gardenAvatar) {
     if (auth?.isSignedIn && auth.photoURL) {
       gardenAvatar.innerHTML = `<img src="${auth.photoURL}" alt="${auth.name}" class="garden-avatar-img" />`;
@@ -157,17 +171,14 @@ window.refreshAllProfileUI = refreshAllProfileUI;
 function initSettings() {
   const s = loadSettings();
 
-  // Back arrow
   document.getElementById('settings-back')?.addEventListener('click', () => switchToTab('battle'));
 
-  // Visual theme
   const savedTheme = s.visualTheme || localStorage.getItem('wpb-visual-theme') || 'dark';
   applyTheme(savedTheme);
   document.querySelectorAll('.theme-btn[data-visual]').forEach(btn => {
     btn.addEventListener('click', () => applyTheme(btn.dataset.visual));
   });
 
-  // Settings-tab difficulty
   const savedDiff = s.aiDifficulty || localStorage.getItem('wpb-difficulty') || 'medium';
   aiDifficulty = savedDiff;
   document.querySelectorAll('.theme-btn[data-setting-diff]').forEach(btn => {
@@ -191,11 +202,9 @@ function initSettings() {
     });
   });
 
-  // Audio toggles
   _initAudioToggle('toggle-sfx',   'sfxEnabled',   true);
   _initAudioToggle('toggle-music', 'musicEnabled', false);
 
-  // Sign out — uses auth.js handleSignOut if available, else local profile
   document.getElementById('btn-sign-out')?.addEventListener('click', () => {
     if (typeof handleSignOut === 'function') {
       handleSignOut();
@@ -205,7 +214,6 @@ function initSettings() {
     }
   });
 
-  // Edit name
   document.getElementById('btn-edit-name')?.addEventListener('click', () => {
     const modal = document.getElementById('edit-name-modal');
     const input = document.getElementById('edit-name-input');
@@ -233,7 +241,6 @@ function initSettings() {
     document.getElementById('edit-name-modal')?.classList.add('hidden');
   });
 
-  // Reset tutorial
   document.getElementById('btn-reset-tutorial')?.addEventListener('click', () => {
     if (window.tutorial) {
       window.tutorial.reset();
@@ -268,7 +275,6 @@ function getSelectedDifficulty() {
 }
 
 function initHomeScreen() {
-  // Home difficulty buttons
   document.querySelectorAll('.diff-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.diff-btn').forEach(b => {
@@ -276,7 +282,8 @@ function initHomeScreen() {
       });
       btn.classList.add('diff-btn--active'); btn.setAttribute('aria-pressed', 'true');
       aiDifficulty = btn.dataset.diff;
-      saveSettings({ aiDifficulty }); localStorage.setItem('wpb-difficulty', btn.dataset.diff);
+      saveSettings({ aiDifficulty });
+      localStorage.setItem('wpb-difficulty', btn.dataset.diff);
       document.querySelectorAll('.theme-btn[data-setting-diff]').forEach(b => {
         const a = b.dataset.settingDiff === aiDifficulty;
         b.classList.toggle('theme-btn--active', a); b.setAttribute('aria-pressed', String(a));
@@ -284,7 +291,6 @@ function initHomeScreen() {
     });
   });
 
-  // Restore saved difficulty
   const savedDiff = loadSettings().aiDifficulty || localStorage.getItem('wpb-difficulty') || 'medium';
   aiDifficulty = savedDiff;
   document.querySelectorAll('.diff-btn').forEach(b => {
@@ -292,7 +298,6 @@ function initHomeScreen() {
     b.classList.toggle('diff-btn--active', on); b.setAttribute('aria-pressed', String(on));
   });
 
-  // Play VS AI
   document.getElementById('btn-vs-ai')?.addEventListener('click', () => {
     if (!trie) return;
     gameMode     = 'vs-ai';
@@ -301,7 +306,6 @@ function initHomeScreen() {
     startGame();
   });
 
-  // Play VS Friend → switches to LOBBY tab
   document.getElementById('btn-vs-friend')?.addEventListener('click', () => {
     switchToTab('lobby');
     const panel = document.querySelector('[data-tab="lobby"]');
@@ -311,26 +315,21 @@ function initHomeScreen() {
     }
   });
 
-  // Settings gear icon → settings tab
   document.getElementById('btn-settings')?.addEventListener('click', () => switchToTab('settings'));
 
-  // How to play
   document.getElementById('btn-how-to-play')?.addEventListener('click', () => {
     if (window.tutorial) { window.tutorial.reset(); window.tutorial.show(); }
   });
 
-  // In-game home button
   document.getElementById('btn-home')?.addEventListener('click', () => {
     if (gameOver || confirm('Leave this game and return to menu?')) goHome();
   });
 
-  // Letter picker cancel
   document.getElementById('modal-cancel')?.addEventListener('click', () => {
     document.getElementById('letter-modal').classList.add('hidden');
     pendingCell = null;
   });
 
-  // Win modal buttons
   document.getElementById('play-again')?.addEventListener('click', () => {
     document.getElementById('win-modal').classList.add('hidden');
     startGame();
@@ -349,7 +348,7 @@ function initHomeScreen() {
    ========================================================== */
 function startGame() {
   scores             = { p1: 0, p2: 0 };
-  currentTurn        = 'p1';
+  setCurrentTurn('p1');
   gameOver           = false;
   pendingCell        = null;
   scoredPaths        = new Set();
@@ -375,11 +374,14 @@ function renderBoard() {
   board = [];
   for (let r = 0; r < 10; r++) {
     board[r] = [];
-    for (let c = 0; c < 10; c++) board[r][c] = { letter: null, owner: null, row: r, col: c };
+    for (let c = 0; c < 10; c++)
+      board[r][c] = { letter: null, owner: null, row: r, col: c };
   }
   const grid = document.getElementById('board');
   const frag = document.createDocumentFragment();
-  for (let r = 0; r < 10; r++) for (let c = 0; c < 10; c++) frag.appendChild(createTileEl(r, c));
+  for (let r = 0; r < 10; r++)
+    for (let c = 0; c < 10; c++)
+      frag.appendChild(createTileEl(r, c));
   grid.innerHTML = '';
   grid.appendChild(frag);
 }
@@ -403,7 +405,11 @@ function createTileEl(r, c) {
    ========================================================== */
 function onTileClick() {
   if (gameOver) return;
-  if (gameMode === 'vs-ai' && currentTurn === 'p2') return;
+
+  // Block taps when it's not the local player's turn
+  if (gameMode === 'vs-ai'      && getCurrentTurn() === 'p2') return;
+  if (gameMode === 'vs-firebase' && getCurrentTurn() === 'p2') return;
+
   const r = parseInt(this.dataset.r, 10);
   const c = parseInt(this.dataset.c, 10);
   if (board[r][c].letter) return;
@@ -432,14 +438,13 @@ function onLetterChosen(letter) {
   document.getElementById('letter-modal').classList.add('hidden');
   if (!pendingCell) return;
 
-  // Firebase multiplayer — send to server instead of placing locally
   if (gameMode === 'vs-firebase' && typeof fbOnTileChosen === 'function') {
     fbOnTileChosen(pendingCell.r, pendingCell.c, letter);
     pendingCell = null;
     return;
   }
 
-  placeLetterOnBoard(pendingCell.r, pendingCell.c, letter, currentTurn);
+  placeLetterOnBoard(pendingCell.r, pendingCell.c, letter, getCurrentTurn());
   pendingCell = null;
 }
 
@@ -498,35 +503,36 @@ function flashCells(cellKeys) {
     }));
   }
 }
-// Expose globally so firebase-multiplayer.js can call it
 window.flashCells = flashCells;
 
 /* ==========================================================
    WORD DETECTION
    ========================================================== */
 function detectWords(board, placedRow, placedCol, trie) {
-  const DIRS = [[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]];
+  const DIRS  = [[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]];
   const found = [], seen = new Set();
   for (const [dr, dc] of DIRS) {
     let sr = placedRow, sc = placedCol;
     while (inBounds(sr-dr, sc-dc) && board[sr-dr][sc-dc].letter) { sr -= dr; sc -= dc; }
     const line = [], coords = [];
     let r = sr, c = sc;
-    while (inBounds(r, c) && board[r][c].letter) { line.push(board[r][c].letter); coords.push([r,c]); r+=dr; c+=dc; }
+    while (inBounds(r, c) && board[r][c].letter) {
+      line.push(board[r][c].letter); coords.push([r, c]); r += dr; c += dc;
+    }
     if (line.length < 3) continue;
-    const pi = coords.findIndex(([rr,cc]) => rr===placedRow && cc===placedCol);
+    const pi = coords.findIndex(([rr, cc]) => rr === placedRow && cc === placedCol);
     if (pi === -1) continue;
-    for (let s = 0; s <= pi; s++) for (let e = pi+1; e <= line.length; e++) {
-      if (e-s < 3) continue;
-      const word = line.slice(s,e).join(''), cells = coords.slice(s,e);
-      const key  = cells.map(([rr,cc]) => `${rr},${cc}`).join('|');
+    for (let s = 0; s <= pi; s++) for (let e = pi + 1; e <= line.length; e++) {
+      if (e - s < 3) continue;
+      const word  = line.slice(s, e).join('');
+      const cells = coords.slice(s, e);
+      const key   = cells.map(([rr, cc]) => `${rr},${cc}`).join('|');
       if (seen.has(key)) continue; seen.add(key);
       if (trie.search(word)) found.push({ word, cells });
     }
   }
   return found;
 }
-// Expose globally so firebase-multiplayer.js can call it
 window.detectWords = detectWords;
 
 function inBounds(r, c) { return r >= 0 && r < 10 && c >= 0 && c < 10; }
@@ -537,9 +543,9 @@ window.scoreWord = scoreWord;
    TURN & WIN
    ========================================================== */
 function switchTurn() {
-  currentTurn = currentTurn === 'p1' ? 'p2' : 'p1';
+  setCurrentTurn(getCurrentTurn() === 'p1' ? 'p2' : 'p1');
   updateHUD();
-  if (gameMode === 'vs-ai' && currentTurn === 'p2') triggerAI();
+  if (gameMode === 'vs-ai' && getCurrentTurn() === 'p2') triggerAI();
 }
 
 function triggerAI() {
@@ -561,7 +567,9 @@ function checkWin() {
     return true;
   }
   let filled = 0;
-  for (let r = 0; r < 10; r++) for (let c = 0; c < 10; c++) if (board[r][c].letter) filled++;
+  for (let r = 0; r < 10; r++)
+    for (let c = 0; c < 10; c++)
+      if (board[r][c].letter) filled++;
   if (filled === 100) { showWin(scores.p1 >= scores.p2); return true; }
   return false;
 }
@@ -572,23 +580,24 @@ function showWin(p1Won) {
   const auth = window.auth;
   const prof = auth?.isSignedIn ? auth : window.profile;
   const myName = prof?.name || 'YOU';
-  const p2Name = gameMode === 'vs-ai' ? 'AI' : 'GUEST';
+  const p2Name = gameMode === 'vs-ai' ? 'AI' : (gameMode === 'vs-firebase'
+    ? (document.getElementById('p2-label')?.textContent || 'GUEST')
+    : 'GUEST');
 
   const winnerName = p1Won ? myName  : p2Name;
   const loserName  = p1Won ? p2Name  : myName;
   const winnerPts  = p1Won ? scores.p1 : scores.p2;
   const loserPts   = p1Won ? scores.p2 : scores.p1;
 
-  document.getElementById('win-pill').textContent    = p1Won ? 'YOU WIN' : 'YOU LOSE';
-  document.getElementById('win-pill').className      = `win-pill${p1Won ? '' : ' win-pill--lose'}`;
+  document.getElementById('win-pill').textContent = p1Won ? 'YOU WIN' : 'YOU LOSE';
+  document.getElementById('win-pill').className   = `win-pill${p1Won ? '' : ' win-pill--lose'}`;
   document.getElementById('winner-name').textContent = winnerName;
   document.getElementById('winner-pts').textContent  = `${winnerPts} pts`;
   document.getElementById('loser-name').textContent  = loserName;
   document.getElementById('loser-pts').textContent   = `${loserPts} pts`;
-  document.getElementById('winner-avatar').textContent = winnerName[0].toUpperCase();
-  document.getElementById('loser-avatar').textContent  = loserName[0].toUpperCase();
+  document.getElementById('winner-avatar').textContent = winnerName[0]?.toUpperCase() || '?';
+  document.getElementById('loser-avatar').textContent  = loserName[0]?.toUpperCase()  || '?';
 
-  // Show Google photo in winner avatar if available
   if (p1Won && auth?.isSignedIn && auth.photoURL) {
     document.getElementById('winner-avatar').innerHTML =
       `<img src="${auth.photoURL}" alt="${myName}" class="account-avatar-img" />`;
@@ -597,10 +606,9 @@ function showWin(p1Won) {
   const lastWordEl = document.getElementById('win-last-word');
   const bonusEl    = document.getElementById('win-bonus');
   if (lastWordEl) lastWordEl.textContent = lastWord || '—';
-  if (bonusEl)    bonusEl.textContent    = (lastWord && scoreWord(lastWord) >= 3) ? '+3 bonus points applied' : '';
+  if (bonusEl)    bonusEl.textContent    =
+    (lastWord && scoreWord(lastWord) >= 3) ? '+3 bonus points applied' : '';
 
-  // ── Record game result ─────────────────────────────────────
-  // Uses auth.js (cloud) if signed in, otherwise profile.js (local)
   if (typeof recordGameResult === 'function') {
     recordGameResult({ won: p1Won, wordsFound: wordsFoundThisGame, points: scores.p1 });
   } else if (prof?.exists?.()) {
@@ -627,9 +635,16 @@ function updateHUD() {
   document.querySelector('#p2-card .progress-bar')?.setAttribute('aria-valuenow', scores.p2);
 
   const badge = document.getElementById('turn-badge');
-  if (gameOver)                   badge.textContent = 'GAME OVER';
-  else if (gameMode === 'vs-ai')  badge.textContent = currentTurn === 'p1' ? 'YOUR TURN' : 'AI TURN';
-  else                            badge.textContent = currentTurn === 'p1' ? 'P1 TURN'   : 'P2 TURN';
+  if (!badge) return;
+  if (gameOver) {
+    badge.textContent = 'GAME OVER';
+  } else if (gameMode === 'vs-ai') {
+    badge.textContent = getCurrentTurn() === 'p1' ? 'YOUR TURN' : 'AI TURN';
+  } else if (gameMode === 'vs-firebase') {
+    badge.textContent = getCurrentTurn() === 'p1' ? 'YOUR TURN' : 'OPPONENT TURN';
+  } else {
+    badge.textContent = getCurrentTurn() === 'p1' ? 'P1 TURN' : 'P2 TURN';
+  }
 }
 
 function showAIThinking(show) {
@@ -648,16 +663,13 @@ window.refreshAllProfileUI = refreshAllProfileUI;
 
 buildTrieAsync(t => {
   trie = t;
+  window.trie = t;   // expose globally for firebase-multiplayer.js word scoring
   console.log('[WPB] Trie ready');
   document.getElementById('loading-state').classList.add('hidden');
   document.getElementById('menu-body').classList.remove('hidden');
 
-  // Profile gate — auth.js handles this if signed in with Google.
-  // For guests, fall back to local profile.js.
   if (!window.auth?.isSignedIn) {
     if (window.profile && !window.profile.exists()) {
-      // Guest first launch — auth.js will show its own screen,
-      // so only show profile modal if auth.js is not loaded
       if (typeof window.auth === 'undefined') {
         setTimeout(() => {
           if (typeof showProfileSetup === 'function') {
