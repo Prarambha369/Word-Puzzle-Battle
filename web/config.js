@@ -11,7 +11,7 @@
 window.WPB_CONFIG = {
   firebase: {
     apiKey:            "AIzaSyAiQxsraHSCQfNk3UkkCj3gwtQMcgQPs9I",
-    authDomain:        "wordpuzzlebattle.firebaseapp.com",
+    authDomain:        "wordpuzzlebattle.web.app",
     databaseURL:       "https://wordpuzzlebattle-default-rtdb.europe-west1.firebasedatabase.app",
     projectId:         "wordpuzzlebattle",
     storageBucket:     "wordpuzzlebattle.firebasestorage.app",
