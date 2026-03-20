@@ -115,11 +115,16 @@ class AuthManager {
       const provider = new firebase.auth.GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
 
-      // On mobile use redirect (more reliable); desktop use popup
-      const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
-      if (isMobile) {
-        await firebase.auth().signInWithRedirect(provider);
-        // Page reloads — onAuthStateChanged will handle the result
+      try {
+  await firebase.auth().signInWithPopup(provider);
+} catch (popupError) {
+  if (popupError.code === 'auth/popup-blocked') {
+    await firebase.auth().signInWithRedirect(provider);
+  } else {
+    throw popupError;
+  }
+      }
+       // Page reloads — onAuthStateChanged will handle the result
       } else {
         await firebase.auth().signInWithPopup(provider);
       }
@@ -300,7 +305,10 @@ function buildAuthScreen() {
         if (result.user) console.log('[WPB:Auth] Redirect sign-in complete');
       })
       .catch(e => {
-        if (e.code !== 'auth/no-current-user') showAuthError(_friendlyError(e.code));
+        if (e.code && e.code !== 'auth/no-current-user' &&
+    !e.message?.includes('missing initial state')) {
+  showAuthError(_friendlyError(e.code));
+        }
       });
   }
 }
