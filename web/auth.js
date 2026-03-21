@@ -1,5 +1,5 @@
 /**
- * Word Puzzle Battle — Google Authentication
+ * Word Puzzle Battle — Authentication Manager
  * Copyright (c) 2026 Prarambha Bashyal. All rights reserved.
  * Source: https://github.com/Prarambha369/word-puzzle-battle
  * License: Word Puzzle Battle Source-Available License v1.0
@@ -7,7 +7,7 @@
 'use strict';
 
 /* ==========================================================
-   AUTH MANAGER
+   AUTH MANAGER — Google + Email/Password + Guest
    ========================================================== */
 class AuthManager {
   constructor() {
@@ -30,6 +30,23 @@ class AuthManager {
     }
     if (!firebase.apps?.length) firebase.initializeApp(cfg);
     this.db = firebase.database();
+
+    // Handle redirect result first (fires on page load after redirect)
+    firebase.auth().getRedirectResult()
+      .then(result => {
+        if (result?.user) {
+          console.log('[WPB:Auth] Redirect sign-in complete:', result.user.displayName);
+        }
+      })
+      .catch(e => {
+        const ignore = ['auth/no-current-user', 'auth/null-user'];
+        const msg    = e.message || '';
+        if (!ignore.includes(e.code) && !msg.includes('missing initial state')) {
+          console.error('[WPB:Auth] Redirect error:', e.code);
+          showAuthError(_friendlyError(e.code));
+        }
+      });
+
     firebase.auth().onAuthStateChanged(user => this._onAuthState(user));
     return true;
   }
@@ -41,7 +58,7 @@ class AuthManager {
       await this._loadOrCreateProfile(user);
       hideAuthScreen();
       this._notifyListeners('signed-in');
-      console.log('[WPB:Auth] Signed in:', user.displayName || user.uid);
+      console.log('[WPB:Auth] Signed in:', user.email || user.displayName || user.uid);
     } else {
       this.user    = null;
       this.profile = null;
@@ -59,17 +76,25 @@ class AuthManager {
     if (snap.exists()) {
       this.profile = snap.val();
       await ref.update({
-        name:     user.displayName || this.profile.name || 'AGENT',
+        name:     user.displayName || this.profile.name    || 'AGENT',
         photoURL: user.photoURL    || this.profile.photoURL || null,
+        email:    user.email       || this.profile.email   || null,
         lastSeen: firebase.database.ServerValue.TIMESTAMP
       });
       this.profile.name     = user.displayName || this.profile.name;
       this.profile.photoURL = user.photoURL    || this.profile.photoURL;
     } else {
+      // Pick a default forest avatar for new users
+      const defaultAvatar = typeof selectDefaultAvatar === 'function'
+        ? selectDefaultAvatar(user.displayName || 'AGENT')
+        : '🌿';
+
       this.profile = {
         name:        user.displayName || 'AGENT',
         photoURL:    user.photoURL    || null,
         email:       user.email       || null,
+        avatar:      defaultAvatar,
+        authType:    user.providerData?.[0]?.providerId || 'email',
         gamesPlayed: 0,
         gamesWon:    0,
         wordsFound:  0,
@@ -84,28 +109,84 @@ class AuthManager {
     refreshAllProfileUI();
   }
 
-  /* ── Sign in with Google — popup first, redirect fallback ── */
+  /* ── Sign in with Google ────────────────────────────────── */
   async signInWithGoogle() {
     const btn = document.getElementById('auth-google-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Connecting…'; }
 
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
+      provider.addScope('email');
       provider.setCustomParameters({ prompt: 'select_account' });
 
-      try {
-        await firebase.auth().signInWithPopup(provider);
-      } catch (popupError) {
-        if (popupError.code === 'auth/popup-blocked') {
-          await firebase.auth().signInWithRedirect(provider);
-        } else {
-          throw popupError;
+      // Mobile browsers block popups — use redirect; desktop uses popup
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (isMobile) {
+        await firebase.auth().signInWithRedirect(provider);
+        // Page navigates away — onAuthStateChanged fires on return
+      } else {
+        try {
+          await firebase.auth().signInWithPopup(provider);
+        } catch (popupErr) {
+          if (popupErr.code === 'auth/popup-blocked') {
+            await firebase.auth().signInWithRedirect(provider);
+          } else {
+            throw popupErr;
+          }
         }
       }
     } catch (e) {
-      console.error('[WPB:Auth] Sign-in failed:', e.message);
+      console.error('[WPB:Auth] Google Sign-in failed:', e.message);
       showAuthError(_friendlyError(e.code));
       if (btn) { btn.disabled = false; btn.textContent = 'Continue with Google'; }
+    }
+  }
+
+  /* ── Email / Password — Register ───────────────────────── */
+  async registerWithEmail(email, password, name) {
+    const btn = document.getElementById('auth-email-register-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Creating…'; }
+
+    try {
+      const cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
+      if (name?.trim()) {
+        await cred.user.updateProfile({ displayName: name.trim() });
+      }
+      // onAuthStateChanged fires → _loadOrCreateProfile runs
+      return true;
+    } catch (e) {
+      console.error('[WPB:Auth] Registration failed:', e.message);
+      showAuthError(_friendlyError(e.code));
+      if (btn) { btn.disabled = false; btn.textContent = 'Sign Up'; }
+      return false;
+    }
+  }
+
+  /* ── Email / Password — Login ───────────────────────────── */
+  async loginWithEmail(email, password) {
+    const btn = document.getElementById('auth-email-login-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Signing in…'; }
+
+    try {
+      await firebase.auth().signInWithEmailAndPassword(email, password);
+      // onAuthStateChanged fires automatically
+      return true;
+    } catch (e) {
+      console.error('[WPB:Auth] Login failed:', e.message);
+      showAuthError(_friendlyError(e.code));
+      if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
+      return false;
+    }
+  }
+
+  /* ── Password Reset ─────────────────────────────────────── */
+  async resetPassword(email) {
+    try {
+      await firebase.auth().sendPasswordResetEmail(email);
+      return true;
+    } catch (e) {
+      console.error('[WPB:Auth] Password reset failed:', e.message);
+      return false;
     }
   }
 
@@ -114,7 +195,7 @@ class AuthManager {
     await firebase.auth().signOut();
   }
 
-  /* ── Record game result to Firebase DB ──────────────────── */
+  /* ── Record game result ─────────────────────────────────── */
   async recordGame({ won, wordsFound, points }) {
     if (!this.user || !this.profile) return;
     const ref = this.db.ref(`users/${this.user.uid}`);
@@ -131,11 +212,23 @@ class AuthManager {
     refreshAllProfileUI();
   }
 
+  /* ── Update avatar (emoji) ──────────────────────────────── */
+  async updateAvatar(emoji) {
+    if (!this.user || !this.profile) return;
+    const ref = this.db.ref(`users/${this.user.uid}`);
+    await ref.update({ avatar: emoji });
+    this.profile.avatar = emoji;
+    _syncToLocalProfile(this.profile);
+    refreshAllProfileUI();
+  }
+
   /* ── Getters ────────────────────────────────────────────── */
   get isSignedIn()  { return this.user !== null; }
-  get name()        { return this.profile?.name     || 'AGENT'; }
+  get name()        { return this.profile?.name      || 'AGENT'; }
   get initial()     { return (this.name[0] || 'A').toUpperCase(); }
-  get photoURL()    { return this.profile?.photoURL || null; }
+  get photoURL()    { return this.profile?.photoURL  || null; }
+  get avatar()      { return this.profile?.avatar    || null; }
+  get email()       { return this.user?.email        || null; }
   get gamesPlayed() { return this.profile?.gamesPlayed || 0; }
   get gamesWon()    { return this.profile?.gamesWon    || 0; }
   get wordsFound()  { return this.profile?.wordsFound  || 0; }
@@ -146,17 +239,17 @@ class AuthManager {
   }
 
   onChange(fn) { this._listeners.push(fn); }
-  _notifyListeners(event) { this._listeners.forEach(fn => fn(event)); }
+  _notifyListeners(e) { this._listeners.forEach(fn => fn(e)); }
 }
 
 /* ==========================================================
    SYNC TO LOCAL PROFILE.JS
-   Keeps existing game.js code working without changes.
    ========================================================== */
 function _syncToLocalProfile(fbProfile) {
   if (!window.profile) return;
   window.profile.data = {
     name:        fbProfile.name        || 'AGENT',
+    avatar:      fbProfile.avatar      || null,
     gamesPlayed: fbProfile.gamesPlayed || 0,
     gamesWon:    fbProfile.gamesWon    || 0,
     wordsFound:  fbProfile.wordsFound  || 0,
@@ -167,7 +260,6 @@ function _syncToLocalProfile(fbProfile) {
 
 /* ==========================================================
    AUTH SCREEN UI
-   Full-screen gate shown before the game loads.
    ========================================================== */
 function buildAuthScreen() {
   if (document.getElementById('auth-screen')) return;
@@ -212,6 +304,7 @@ function buildAuthScreen() {
       <div class="auth-signin-section">
         <p class="auth-prompt">Sign in to save your stats and play online</p>
 
+        <!-- Google Sign-In -->
         <button class="auth-google-btn" id="auth-google-btn" aria-label="Continue with Google">
           <svg class="auth-google-icon" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -228,6 +321,42 @@ function buildAuthScreen() {
           <span class="auth-divider-line"></span>
         </div>
 
+        <!-- Email / Password Tab Switcher -->
+        <div class="auth-tabs" role="tablist" aria-label="Sign in method">
+          <button class="auth-tab-btn auth-tab-btn--active" data-tab="login"
+                  role="tab" aria-selected="true">Sign In</button>
+          <button class="auth-tab-btn" data-tab="register"
+                  role="tab" aria-selected="false">Sign Up</button>
+        </div>
+
+        <!-- Login Form -->
+        <div class="auth-form" id="auth-login-form" role="tabpanel">
+          <input type="email"    id="auth-login-email"    placeholder="Email address"
+                 class="auth-input" autocomplete="email" />
+          <input type="password" id="auth-login-password" placeholder="Password"
+                 class="auth-input" autocomplete="current-password" />
+          <button class="auth-primary-btn" id="auth-email-login-btn">Sign In</button>
+          <button class="auth-link-btn"    id="auth-forgot-password">Forgot password?</button>
+        </div>
+
+        <!-- Register Form -->
+        <div class="auth-form hidden" id="auth-register-form" role="tabpanel">
+          <input type="text"     id="auth-register-name"     placeholder="Display name (2–16 chars)"
+                 class="auth-input" autocomplete="name" maxlength="16" />
+          <input type="email"    id="auth-register-email"    placeholder="Email address"
+                 class="auth-input" autocomplete="email" />
+          <input type="password" id="auth-register-password" placeholder="Password (min 6 chars)"
+                 class="auth-input" autocomplete="new-password" />
+          <button class="auth-primary-btn" id="auth-email-register-btn">Sign Up</button>
+        </div>
+
+        <div class="auth-divider" style="margin-top:8px">
+          <span class="auth-divider-line"></span>
+          <span class="auth-divider-text">or</span>
+          <span class="auth-divider-line"></span>
+        </div>
+
+        <!-- Guest -->
         <button class="auth-guest-btn" id="auth-guest-btn">
           Play as Guest
         </button>
@@ -247,28 +376,71 @@ function buildAuthScreen() {
 
   document.body.appendChild(el);
 
+  /* ── Wire up all events ─────────────────────────────────── */
+
+  // Google
   document.getElementById('auth-google-btn')?.addEventListener('click', () => {
     window.auth.signInWithGoogle();
   });
 
-  document.getElementById('auth-guest-btn')?.addEventListener('click', () => {
-    _handleGuestPlay();
+  // Guest
+  document.getElementById('auth-guest-btn')?.addEventListener('click', _handleGuestPlay);
+
+  // Tab switching
+  el.querySelectorAll('.auth-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      el.querySelectorAll('.auth-tab-btn').forEach(b => {
+        b.classList.remove('auth-tab-btn--active');
+        b.setAttribute('aria-selected', 'false');
+      });
+      btn.classList.add('auth-tab-btn--active');
+      btn.setAttribute('aria-selected', 'true');
+      const isLogin = btn.dataset.tab === 'login';
+      document.getElementById('auth-login-form').classList.toggle('hidden', !isLogin);
+      document.getElementById('auth-register-form').classList.toggle('hidden', isLogin);
+    });
   });
 
-  // Handle any pending redirect result (fallback flow only)
-  if (typeof firebase !== 'undefined') {
-    firebase.auth().getRedirectResult()
-      .then(result => {
-        if (result?.user) console.log('[WPB:Auth] Redirect sign-in complete');
-      })
-      .catch(e => {
-        if (e.code &&
-            e.code !== 'auth/no-current-user' &&
-            !e.message?.includes('missing initial state')) {
-          showAuthError(_friendlyError(e.code));
-        }
-      });
-  }
+  // Email login
+  document.getElementById('auth-email-login-btn')?.addEventListener('click', async () => {
+    const email    = document.getElementById('auth-login-email')?.value.trim();
+    const password = document.getElementById('auth-login-password')?.value;
+    if (!email || !password) { showAuthError('Enter your email and password.'); return; }
+    await window.auth.loginWithEmail(email, password);
+  });
+
+  // Enter key in login form
+  ['auth-login-email', 'auth-login-password'].forEach(id => {
+    document.getElementById(id)?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('auth-email-login-btn')?.click();
+    });
+  });
+
+  // Email register
+  document.getElementById('auth-email-register-btn')?.addEventListener('click', async () => {
+    const name     = document.getElementById('auth-register-name')?.value.trim();
+    const email    = document.getElementById('auth-register-email')?.value.trim();
+    const password = document.getElementById('auth-register-password')?.value;
+    if (!email || !password) { showAuthError('Enter your email and password.'); return; }
+    if (password.length < 6)  { showAuthError('Password must be at least 6 characters.'); return; }
+    if (name && name.length < 2) { showAuthError('Display name must be at least 2 characters.'); return; }
+    await window.auth.registerWithEmail(email, password, name);
+  });
+
+  // Enter key in register form
+  document.getElementById('auth-register-password')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('auth-email-register-btn')?.click();
+  });
+
+  // Forgot password
+  document.getElementById('auth-forgot-password')?.addEventListener('click', async () => {
+    const email = document.getElementById('auth-login-email')?.value.trim();
+    if (!email) { showAuthError('Enter your email address above first.'); return; }
+    const ok = await window.auth.resetPassword(email);
+    showAuthError(ok
+      ? '✓ Reset email sent — check your inbox.'
+      : 'Could not send reset email. Try again.');
+  });
 }
 
 function showAuthScreen() {
@@ -286,16 +458,17 @@ function showAuthError(msg) {
   if (!el) return;
   el.textContent = msg;
   el.classList.remove('hidden');
-  setTimeout(() => el.classList.add('hidden'), 5000);
+  el.style.color = msg.startsWith('✓') ? 'var(--color-accent)' : 'var(--color-danger)';
+  setTimeout(() => el.classList.add('hidden'), 6000);
 }
 
-/* Guest flow — fall back to local profile.js */
+/* Guest flow */
 function _handleGuestPlay() {
   hideAuthScreen();
   if (window.profile && !window.profile.exists()) {
     if (typeof showProfileSetup === 'function') {
-      showProfileSetup(name => {
-        window.profile.create(name);
+      showProfileSetup((name, avatar) => {
+        window.profile.create(name, avatar);
         refreshAllProfileUI();
         if (window.tutorial?.shouldShowTutorial()) window.tutorial.show();
       });
@@ -306,22 +479,29 @@ function _handleGuestPlay() {
   }
 }
 
-/* Map Firebase error codes to friendly messages */
+/* Friendly error messages */
 function _friendlyError(code) {
   const map = {
-    'auth/popup-closed-by-user':     'Sign-in cancelled.',
-    'auth/popup-blocked':            'Popup blocked — allow popups for this site.',
-    'auth/network-request-failed':   'No internet connection.',
-    'auth/cancelled-popup-request':  'Sign-in cancelled.',
-    'auth/user-disabled':            'This account has been disabled.',
-    'auth/account-exists-with-different-credential': 'Account exists with a different sign-in method.'
+    'auth/popup-closed-by-user':                     'Sign-in cancelled.',
+    'auth/popup-blocked':                            'Popup blocked — allow popups for this site.',
+    'auth/network-request-failed':                   'No internet connection.',
+    'auth/cancelled-popup-request':                  'Sign-in cancelled.',
+    'auth/user-disabled':                            'This account has been disabled.',
+    'auth/account-exists-with-different-credential': 'Account exists with a different sign-in method.',
+    'auth/email-already-in-use':                     'Email already registered. Sign in instead.',
+    'auth/invalid-email':                            'Invalid email address.',
+    'auth/weak-password':                            'Password must be at least 6 characters.',
+    'auth/wrong-password':                           'Incorrect password.',
+    'auth/user-not-found':                           'No account found with this email.',
+    'auth/too-many-requests':                        'Too many attempts. Try again later.',
+    'auth/operation-not-allowed':                    'Email/password sign-in is not enabled.',
+    'auth/invalid-credential':                       'Invalid email or password.'
   };
   return map[code] || 'Sign-in failed. Please try again.';
 }
 
 /* ==========================================================
    REFRESH UI HELPERS
-   Called after any auth/profile change.
    ========================================================== */
 function refreshAllProfileUI() {
   const auth = window.auth;
@@ -336,9 +516,16 @@ function refreshAllProfileUI() {
     ? 'STATUS: GROWTH ACTIVE'
     : (window.profile?.exists() ? 'STATUS: GUEST MODE' : 'NOT SIGNED IN');
 
+  // Avatar priority: Google photo > emoji avatar > initial letter
   if (avatarEl) {
-    if (auth?.isSignedIn && auth.photoURL) {
+    const googlePhoto = auth?.isSignedIn && auth.photoURL;
+    const emojiAvatar = prof?.avatar || (auth?.isSignedIn && auth.profile?.avatar);
+
+    if (googlePhoto) {
       avatarEl.innerHTML = `<img src="${auth.photoURL}" alt="${auth.name}" class="account-avatar-img" />`;
+    } else if (emojiAvatar) {
+      avatarEl.textContent = emojiAvatar;
+      avatarEl.style.fontSize = '1.8rem';
     } else {
       avatarEl.textContent = prof?.initial || '?';
       avatarEl.classList.add('account-avatar--initial');
@@ -352,12 +539,15 @@ function refreshAllProfileUI() {
   const gardenName   = document.getElementById('garden-player-name');
   const gardenStatus = document.getElementById('garden-status');
   if (gardenName)   gardenName.textContent   = prof?.name || '—';
-  if (gardenStatus) gardenStatus.textContent = auth?.isSignedIn
-    ? '☁ SYNCED TO CLOUD'
-    : '💾 LOCAL STORAGE';
+  if (gardenStatus) gardenStatus.textContent = auth?.isSignedIn ? '☁ SYNCED TO CLOUD' : '💾 LOCAL STORAGE';
   if (gardenAvatar) {
-    if (auth?.isSignedIn && auth.photoURL) {
+    const googlePhoto  = auth?.isSignedIn && auth.photoURL;
+    const emojiAvatar  = prof?.avatar || (auth?.isSignedIn && auth.profile?.avatar);
+    if (googlePhoto) {
       gardenAvatar.innerHTML = `<img src="${auth.photoURL}" alt="${auth.name}" class="garden-avatar-img" />`;
+    } else if (emojiAvatar) {
+      gardenAvatar.textContent = emojiAvatar;
+      gardenAvatar.style.fontSize = '2.2rem';
     } else {
       gardenAvatar.textContent = prof?.initial || '?';
     }
@@ -373,13 +563,11 @@ function refreshAllProfileUI() {
   if (sr) sr.textContent = prof?.winRate     || '—';
 
   const signOutBtn = document.getElementById('btn-sign-out');
-  if (signOutBtn) {
-    signOutBtn.textContent = auth?.isSignedIn ? 'SIGN OUT' : 'SIGNED IN AS GUEST';
-  }
+  if (signOutBtn) signOutBtn.textContent = auth?.isSignedIn ? 'SIGN OUT' : 'SIGNED IN AS GUEST';
 }
 
 /* ==========================================================
-   GAME RESULT HOOK — called by game.js after every win
+   GAME RESULT HOOK
    ========================================================== */
 async function recordGameResult({ won, wordsFound, points }) {
   if (window.auth?.isSignedIn) {
@@ -391,7 +579,7 @@ async function recordGameResult({ won, wordsFound, points }) {
 }
 
 /* ==========================================================
-   SIGN-OUT HANDLER — wired in game.js initSettings()
+   SIGN-OUT HANDLER
    ========================================================== */
 async function handleSignOut() {
   if (window.auth?.isSignedIn) {
