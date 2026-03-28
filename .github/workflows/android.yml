@@ -1,0 +1,19 @@
+name: Build Android
+on: [workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm install -g @capacitor/cli
+      - run: npx cap init -y --webDir web
+      - run: npx cap add android
+      - run: npx cap sync
+      - uses: android-actions/setup-android@v3
+      - run: cd android && ./gradlew assembleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: android/app/build/outputs/apk/release/*.apk

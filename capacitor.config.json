@@ -1,0 +1,6 @@
+{
+  "appId": "com.misterbashyal.wordpuzzle",
+  "appName": "Word Puzzle Battle",
+  "webDir": "web",
+  "server": { "androidScheme": "https" }
+}

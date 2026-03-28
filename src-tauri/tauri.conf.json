@@ -1,0 +1,13 @@
+{
+  "build": { "devPath": "../web", "distDir": "../web" },
+  "tauri": {
+    "allowlist": { "shell": { "open": true } },
+    "bundle": {
+      "active": true,
+      "category": "Game",
+      "identifier": "com.misterbashyal.wordpuzzle",
+      "icon": ["icons/icon.png"]
+    },
+    "windows": [{ "title": "Word Puzzle Battle", "width": 1200, "height": 900 }]
+  }
+}
